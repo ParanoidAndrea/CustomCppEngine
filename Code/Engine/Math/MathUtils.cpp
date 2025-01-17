@@ -173,6 +173,12 @@ float SinDegrees(float degrees)
 	return t_sin;
 }
 
+float TanDegrees(float degrees)
+{
+	float t_tan = tanf(ConvertDegreesToRadians(degrees));
+	return t_tan;
+}
+
 float AcosDegrees(float degrees)
 {
 	return acosf(ConvertDegreesToRadians(degrees));
@@ -421,6 +427,59 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 		else
 			return true;
 	}
+}
+
+bool IsPointInsideHexgon2D(Vec2 const& point, Vec2 const& hexgonCenter, float hexgonInradius)
+{
+	Vec2 vertexPos[6];
+	constexpr float deltaDegrees = 60.f;
+	constexpr float CIRCUMRADIUS_FACTOR = 2.f / 1.73205f;
+	float circumradius = CIRCUMRADIUS_FACTOR * hexgonInradius;
+	for (int i = 0; i < 6; ++i)
+	{
+		float degree = i * deltaDegrees;
+		vertexPos[i] = Vec2(hexgonCenter.x + circumradius * CosDegrees(degree), hexgonCenter.y + circumradius * SinDegrees(degree));
+	}
+	for (int i = 0; i < 5; ++i)
+	{
+		Vec2 edge = vertexPos[i + 1] - vertexPos[i];
+		Vec2 t = point - vertexPos[i];
+		if (CrossProduct2D(edge, t) < 0)
+		{
+			return false;
+		}
+	}
+	Vec2 edge = vertexPos[0] - vertexPos[5];
+	Vec2 t = point - vertexPos[5];
+	if (CrossProduct2D(edge, t) < 0)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool IsPointInsideHexgonXY3D(Vec3 const& point, Vec2 const& hexgonCenter, float hexgonInradius)
+{
+	Vec3 vertexPos[6];
+	constexpr float DELTA_DEGREES = 60.f;
+	constexpr float CIRCUMRADIUS_FACTOR = 2.f / 1.73205f;
+	float circumradius = CIRCUMRADIUS_FACTOR * hexgonInradius;
+	for (int i = 0; i < 6; ++i)
+	{
+		float degree = i * DELTA_DEGREES;
+		vertexPos[i] = Vec3(hexgonCenter.x + circumradius * CosDegrees(degree), hexgonCenter.y + circumradius * SinDegrees(degree), 0.f);
+	}
+	for (int i = 0; i < 6; ++i)
+	{
+		Vec3 edge = vertexPos[(i + 1) % 6] - vertexPos[i]; // Use modulo to wrap around
+		Vec3 t = point - vertexPos[i];
+
+		if (CrossProduct3D(edge, t).z < 0.f) // If z-component is negative, point is outside
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius)
@@ -715,6 +774,36 @@ Vec3 const GetNearestPointOnOBB3D(Vec3 const& referencePos, OBB3 const& oriented
 
 	return orientedBox.m_center + orientedBox.m_iBasisNormal * localNearestPointiBasis +
 		orientedBox.m_jBasisNormal * localNearestPointjBasis + orientedBox.m_kBasisNormal * localNearestPointkBasis;
+}
+
+Vec3 const GetDisplacementToAABB3D(Vec3 const& point, AABB3 const& box)
+{
+	Vec3 displacement;
+	if (point.x < box.m_mins.x)
+	{
+		displacement.x = box.m_mins.x - point.x;
+	}
+	else if (point.x > box.m_maxs.x)
+	{
+		displacement.x = point.x - box.m_maxs.x;
+	}
+	if (point.y < box.m_mins.y)
+	{
+		displacement.y = box.m_mins.y - point.y;
+	}
+	else if (point.y > box.m_maxs.y)
+	{
+		displacement.y = point.y - box.m_maxs.y;
+	}
+	if (point.z < box.m_mins.z)
+	{
+		displacement.z = box.m_mins.z - point.z;
+	}
+	else if (point.x > box.m_maxs.x)
+	{
+		displacement.z = point.z - box.m_maxs.z;
+	}
+	return displacement;
 }
 
 Vec3 const GetNearestPointOnAABB3D(Vec3 const& referencePos, AABB3 const& box)

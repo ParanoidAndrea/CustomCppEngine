@@ -31,4 +31,5 @@ public:
 	void SetCenter(Vec2 const& newCenter);
 	void SetDimensions(Vec2 const& newDimensions);
 	void StretchToIncludePoint(Vec2 const& point);
+	void GetEdgePoints(Vec2 outPoints[4]) const;
 };

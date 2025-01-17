@@ -151,6 +151,22 @@ EulerAngles const Vec3::GetEulerAngle() const
 	return EulerAngles(Atan2Degrees(y, x), AsinDegrees(-z), 0.f);
 }
 
+Vec3 const Vec3::GetReflected(Vec3 const& impactSurfaceNormal) const
+{
+	Vec3 projectVector = impactSurfaceNormal * DotProduct3D(*this, impactSurfaceNormal);
+	Vec3 reflectionVector = *this - projectVector;
+	return reflectionVector - projectVector;
+}
+
+void Vec3::Reflect(Vec3 const& impactSurfaceNormal)
+{
+	Vec3 projectVector = impactSurfaceNormal * DotProduct3D(*this, impactSurfaceNormal);
+	Vec3 reflectionVector = *this - projectVector - projectVector;
+	x = reflectionVector.x;
+	y = reflectionVector.y;
+	z = reflectionVector.z;
+}
+
 //-----------------------------------------------------------------------------------------------
 const Vec3 Vec3::operator + (const Vec3& vecToAdd) const
 {

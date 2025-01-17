@@ -36,6 +36,8 @@ public:
 	static Vec3 const MakeFromPolarDegrees(float latitudeDegrees, float longitudeDegrees, float length = 1.f);
 	bool SetFromText(const char* text);
 	EulerAngles const GetEulerAngle() const;
+	Vec3 const GetReflected(Vec3 const& impactSurfaceNormal) const;
+	void Reflect(Vec3 const& impactSurfaceNormal);
 
 	// Operators
 	bool operator==(Vec3 const& compare) const;

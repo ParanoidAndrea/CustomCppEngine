@@ -33,7 +33,6 @@ Vec2 CubicHermiteCurve2D::EvaluateAtApproximateDistance(float distanceAlongCurve
 	return curve.EvaluateAtApproximateDistance(distanceAlongCurve, numSubdiv);
 }
 
-
 CubicBezierCurve2D::CubicBezierCurve2D(Vec2 startPos, Vec2 guidePos1, Vec2 guidePos2, Vec2 endPos)
 	:m_startPos(startPos),
 	m_guidePos1(guidePos1),
@@ -100,4 +99,5 @@ Vec2 CubicBezierCurve2D::EvaluateAtApproximateDistance(float distanceAlongCurve,
 	// If the remaining distance is not covered by the segments, return the last point
 	return currentPoint;
 }
+
 

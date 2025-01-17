@@ -33,3 +33,4 @@ public:
 	Vec2 m_guidePos2;
 	Vec2 m_endPos;
 };
+

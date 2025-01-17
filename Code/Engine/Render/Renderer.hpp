@@ -41,7 +41,7 @@ struct LightingDebug
 	int	   RenderSpecular   = true;
 	int	   RenderEmissive   = true;
 	int	   UseDiffuseMap    = true;
-	int	   UseNormalMap    = true;
+	int	   UseNormalMap     = true;
 	int	   UseSpecularMap   = true;
 	int	   UseGlossinessMap = true;
 	int	   UseEmissiveMap   = true;
@@ -90,6 +90,7 @@ struct BlurConstants
 	BlurSample Samples[k_blurMaxSamples];
 };
 
+
 enum class VertexType
 {
 	Vertex_PCU,
@@ -101,6 +102,7 @@ enum class BlendMode
 	ALPHA,
 	ADDITIVE,
 	OPAQUE,
+	WATER,
 	COUNT
 };
 
@@ -109,6 +111,8 @@ enum class SamplerMode
 	POINT_CLAMP,
 	BILINEAR_WRAP,
 	BILINEAR_CLAMP,
+	MIP_MAPPING,
+	MIP_MAPPING_POINT,
 	COUNT
 };
 
@@ -134,6 +138,7 @@ class VertexBuffer;
 class ConstantBuffer;
 class Image;
 class IndexBuffer;
+class TextureArray;
 class Renderer
 {
 public:
@@ -156,20 +161,22 @@ public:
 	void DrawVertexBuffer(VertexBuffer* vbo, int vertexCount, VertexType type = VertexType::Vertex_PCU, int vertexOffset = 0);
 
 	void BindTexture(Texture const* texture, unsigned int slot = 0);
+	void BindTextureArray(TextureArray const* textureArray, unsigned int slot = 0);
 	void CreateBloomShaders(char const* blurDownFilename, char const* blurUpFilename, char const* compositeFilename);
 	void SetBlendMode(BlendMode blendMode);
-	void SetSamplerMode(SamplerMode sampleMode);
+	void SetSamplerMode(SamplerMode sampleMode1, SamplerMode sampleMode2 = SamplerMode::COUNT);
 	void SetRasterizerMode(RasterizerMode rasterizerMode);
 	void SetDepthMode(DepthMode depthMode);
 	void SetModelConstants(Mat44 const& modelMatrix = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE);
 	void SetLightingConstants(Vec3 sunDirection = Vec3(2.f,1.f,-1.f), float sunIntensity = 0.85f, float ambientIntensity = 0.35f);
 	void SetLightingConstants(LightConstants const& lightConstants);
-	Texture* CreateOrGetTextureFromFile(const char* imageFilePath);
+	Texture* CreateOrGetTextureFromFile(const char* imageFilePath, bool isMipMapping = false);
 	BitmapFont* CreateOrGetBitmapFont(const char* bitmapFontFilePathWithNoExtension);
 	Shader* CreateOrGetShaderFromFile(const char* filePath, VertexType vertexType = VertexType::Vertex_PCUTBN);
 	VertexBuffer* CreateVertexBuffer(size_t const size);
 	IndexBuffer* CreateIndexBuffer(size_t const size);
 	Texture* CreateRenderTexture(IntVec2 const& dimensions, char const* name);
+	TextureArray* CreateTextureArray(std::vector<Image*>& textures, std::string const& textureArrayName);
 	void CopyCPUToGPU(const void* data, size_t size, VertexBuffer*& vbo);
 	void CopyCPUToGPU(const void* data, size_t size, IndexBuffer*& ibo);
 	void BindShader(Shader* shader);
@@ -180,17 +187,19 @@ public:
 	void RenderEmissive();
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
-
 private:
+    static int CalculateMipCount(int width, int height);
+	static std::vector<unsigned char> GenerateNextMipLevel(const unsigned char* srcData, int srcWidth, int srcHeight);
 	void SetBlurConstantsBlurDown(BlurConstants& blurConstants);
 	void SetBlurConstantsBlurUp(BlurConstants& blurConstants);
 	BitmapFont* CreateBitmapFont(const char* bitmapFontFilePathWithNoExtension);
 	BitmapFont* GetBitmapFontForFileName(const char* bitmapFontFilePathWithNoExtension);
 	Texture* GetTextureForFileName(char const* imageFilePath);
-	Texture* CreateTextureFromFile(char const* imageFilePath);
+	Texture* CreateTextureFromFile(char const* imageFilePath, bool isMipMapping = false);
 	Image* CreateImageFromFile(char const* imageFilePath);
 	Texture* CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
-	Texture* CreateTextureFromImage(const Image& image);
+	Texture* CreateTextureFromImage(Image const& image);
+	Texture* CreateMipMappingTextureFromImage(Image const& image);
 	void CreateDebugModule();
 	void CreateDeviceAndSwapChain();
 	void CreateBuffers();
@@ -232,7 +241,8 @@ protected:
 
 	ID3D11BlendState* m_blendState = nullptr;
 	ID3D11BlendState* m_blendStates[(int)(BlendMode::COUNT)] = {};
-	ID3D11SamplerState* m_samplerState = nullptr;
+	ID3D11SamplerState* m_samplerState1 = nullptr;
+	ID3D11SamplerState* m_samplerState2 = nullptr;
 	ID3D11SamplerState* m_samplerStates[(int)(SamplerMode::COUNT)] = {};
 	ID3D11RasterizerState* m_rasterizerState = nullptr;
 	ID3D11RasterizerState* m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
@@ -240,11 +250,13 @@ protected:
 	ID3D11DepthStencilState* m_depthStencilState = nullptr;
 
 	BlendMode m_desiredBlendMode = BlendMode::ALPHA;
-	SamplerMode m_desiredSamplerMode = SamplerMode::POINT_CLAMP;
+	SamplerMode m_desiredSamplerMode1 = SamplerMode::POINT_CLAMP;
+	SamplerMode m_desiredSamplerMode2 = SamplerMode::COUNT;
 	RasterizerMode m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_NONE;
 	DepthMode m_desiredDepthMode = DepthMode::DISABLED;
 
 	std::vector<Texture*> m_loadedTextures;
+	std::vector<TextureArray*> m_loadedTextureArrays;
 	std::vector<Texture*> m_blurDownTextures;
 	std::vector<Texture*> m_blurUpTextures;
 	std::vector<BitmapFont* > m_loadedFonts;
@@ -265,6 +277,7 @@ protected:
 	VertexBuffer* m_fullScreenQuadVBO_PCU = nullptr;
 	ConstantBuffer* m_blurCBO = nullptr;
 
+	bool m_isDoubleSampler = false;
 	Texture* m_emissiveRenderTexture = nullptr;
 	Texture* m_emissiveBlurredRenderTexture = nullptr;
 	IntVec2 m_savedViewportSize;

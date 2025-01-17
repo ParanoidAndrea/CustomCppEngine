@@ -115,7 +115,7 @@ bool ObjLoader::Load(std::string const& fileName, std::vector<Vertex_PCUTBN>& ou
 		if (tokens[0].compare("mtllib") == 0)
 		{
 			std::string matLibFilename = tokens[1];
-			LoadMaterialLibrary(matLibFilename, materialLibrary);
+			LoadMaterialLibrary(GetObjParentPath(fileName)+matLibFilename, materialLibrary);
 		}
 		else if (tokens[0].compare("usemtl") == 0)
 		{
@@ -304,10 +304,20 @@ bool ObjLoader::Load(std::string const& fileName, std::vector<Vertex_PCUTBN>& ou
 }
 
 
+std::string const GetObjParentPath(const std::string& path)
+{
+    size_t lastSeparator = path.find_last_of("/\\");
+    if (lastSeparator == std::string::npos) 
+	{
+        return ""; // Return empty if no separator found
+    }
+    return path.substr(0, lastSeparator + 1);
+}
+
 void LoadMaterialLibrary(std::string const& materialLibFilename, std::map<std::string, Rgba8>& materialLibrary)
 {
 	std::string materialLibString;
-	FileReadToString(materialLibString,"Data/Models/"+materialLibFilename);
+	FileReadToString(materialLibString,materialLibFilename);
 	Strings materialLibStringLines = SplitStringOnDelimiter(materialLibString, "\n", false);
 	std::string currentMaterialName;
 	for (size_t i = 0; i <materialLibStringLines.size(); ++i)

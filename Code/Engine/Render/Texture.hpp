@@ -15,6 +15,7 @@ private:
 	~Texture();
 
 public:
+	bool IsNormalTextureCompatible(Texture const* normalTexture) const;
 	IntVec2	const& GetDimensions() const
 	{ 
 		return m_dimensions; 
@@ -23,7 +24,7 @@ public:
 	{ 
 		return m_name; 
 	}
-	
+	ID3D11Texture2D const* GetTexture() const;
 protected:
 	std::string			m_name;
 	IntVec2				m_dimensions;

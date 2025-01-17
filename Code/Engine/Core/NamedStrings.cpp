@@ -14,7 +14,7 @@ void NamedStrings::PopulateFromXmlElementAttributes(XmlElement const& element)
 
 void NamedStrings::SetValue(std::string const& keyName, std::string const& newValue)
 {
-	m_keyValuePairs[keyName] = newValue;
+	m_keyValuePairs[keyName] =newValue;
 }
 
 std::string NamedStrings::GetValue(std::string const& keyName, std::string const& defaultValue) const
@@ -24,6 +24,7 @@ std::string NamedStrings::GetValue(std::string const& keyName, std::string const
 	{
 		return found->second;
 	}
+
 	return defaultValue;
 }
 
@@ -41,6 +42,7 @@ bool NamedStrings::GetValue(std::string const& keyName, bool defaultValue) const
 			return false;
 		}
 	}
+
 	return defaultValue;
 }
 
@@ -52,6 +54,7 @@ int NamedStrings::GetValue(std::string const& keyName, int defaultValue) const
 		int value = atoi(found->second.c_str());
 		return value;
 	}
+
 	return defaultValue;
 }
 
@@ -63,6 +66,7 @@ float NamedStrings::GetValue(std::string const& keyName, float defaultValue) con
 		float value = static_cast<float>(atof(found->second.c_str()));
 		return value;
 	}
+
 	return defaultValue;
 }
 
@@ -73,7 +77,8 @@ std::string NamedStrings::GetValue(std::string const& keyName, char const* defau
 	{
 		return found->second;
 	}
-	return std::string(defaultValue);
+
+	return defaultValue;
 }
 
 Rgba8 NamedStrings::GetValue(std::string const& keyName, Rgba8 const& defaultValue) const
@@ -87,6 +92,7 @@ Rgba8 NamedStrings::GetValue(std::string const& keyName, Rgba8 const& defaultVal
 			return value;
 		}
 	}
+
 	return defaultValue;
 }
 
@@ -101,6 +107,7 @@ Vec2 NamedStrings::GetValue(std::string const& keyName, Vec2 const& defaultValue
 			return value;
 		}
 	}
+
 	return defaultValue;
 }
 
@@ -115,5 +122,36 @@ IntVec2 NamedStrings::GetValue(std::string const& keyName, IntVec2 const& defaul
 			return value;
 		}
 	}
+
 	return defaultValue;
+}
+
+EulerAngles NamedStrings::GetValue(std::string const& keyName, EulerAngles const& defaultValue) const
+{
+    auto found = m_keyValuePairs.find(keyName);
+    if (found != m_keyValuePairs.end())
+    {
+        EulerAngles value;
+        if (value.SetFromText(found->second.c_str()))
+        {
+            return value;
+        }
+    }
+
+    return defaultValue;
+}
+
+Vec3 NamedStrings::GetValue(std::string const& keyName, Vec3 const& defaultValue) const
+{
+    auto found = m_keyValuePairs.find(keyName);
+    if (found != m_keyValuePairs.end())
+    {
+        Vec3 value;
+        if (value.SetFromText(found->second.c_str()))
+        {
+            return value;
+        }
+    }
+
+    return defaultValue;
 }

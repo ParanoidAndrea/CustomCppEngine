@@ -47,6 +47,7 @@ public:
 	void AddWorldPoint(Vec3 const& position, float radius, float duration, Rgba8 const& startColor, DebugRenderMode mode);
 	void AddWorldWireCylinder(Vec3 const& basePos, Vec3 const& topPos, float radius, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode);
 	void AddWorldWiredSphere(Vec3 const& centerPos, float radius, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode);
+	void AddWorldWiredAABB3(AABB3 const& box, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode);
 	void AddWorldLine(Vec3 const& startPos, Vec3 const& endPos, float radius, float duration, Rgba8 const& startColor , Rgba8 const& endColor, DebugRenderMode mode);
 	void AddWorldArrow(Vec3 const& startPos, Vec3 const& endPos, float radius, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode);
 	void AddWorldBasis(Mat44 const& transform, float duration, DebugRenderMode mode, float scale = 1.f);
@@ -311,6 +312,30 @@ void DebugRenderSystem::AddWorldWiredSphere(Vec3 const& centerPos, float radius,
 	m_debugRenderMutex.unlock();
 }
 
+void DebugRenderSystem::AddWorldWiredAABB3(AABB3 const& box, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode)
+{
+	DebugRenderGeometry boxGeometry;
+	boxGeometry.m_startColor = startColor;
+	boxGeometry.m_endColor = endColor;
+	boxGeometry.m_currentColor = startColor;
+	boxGeometry.m_mode = mode;
+	boxGeometry.m_rasterizerMode = RasterizerMode::WIREFRAME_CULL_NONE;
+	if (duration == 0.f)
+	{
+		boxGeometry.m_timer = new Timer(Clock::GetSystemClock().GetDeltaSeconds());
+		boxGeometry.m_timer->Start();
+	}
+	else if (duration != -1.f)
+	{
+		boxGeometry.m_timer = new Timer(duration);
+		boxGeometry.m_timer->Start();
+	}
+	AddVertsForAABB3D(boxGeometry.m_vertexes, box, Rgba8::WHITE);
+	m_debugRenderMutex.lock();
+	m_geometries.push_back(boxGeometry);
+	m_debugRenderMutex.unlock();
+}
+
 void DebugRenderSystem::AddWorldArrow(Vec3 const& startPos, Vec3 const& endPos, float radius, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode)
 {
 	DebugRenderGeometry arrow;
@@ -548,6 +573,11 @@ void DebugAddWorldWireCylinder(Vec3 const& basePos, Vec3 const& topPos, float ra
 void DebugAddWorldWiredSphere(Vec3 const& centerPos, float radius, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode)
 {
 	g_debugRenderSystem->AddWorldWiredSphere(centerPos, radius, duration, startColor, endColor, mode);
+}
+
+void DebugAddWorldWiredAABB3(AABB3 const& box, float duration, Rgba8 const& startColor /*= Rgba8::WHITE*/, Rgba8 const& endColor /*= Rgba8::WHITE*/, DebugRenderMode mode)
+{
+	g_debugRenderSystem->AddWorldWiredAABB3(box, duration, startColor, endColor, mode);
 }
 
 void DebugAddWorldArrow(Vec3 const& startPos, Vec3 const& endPos, float radius, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode)

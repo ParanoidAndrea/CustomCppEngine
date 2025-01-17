@@ -16,6 +16,7 @@ Rgba8 const DevConsole::INFO_MAJOR   = Rgba8::GREEN;
 Rgba8 const DevConsole::INFO_MINOR   = Rgba8(0,0,255,125);
 Rgba8 const DevConsole::INPUT_TEXT   = Rgba8::WHITE;
 Rgba8 const DevConsole::INFO_CONSOLE = Rgba8::BLUE;
+Rgba8 const DevConsole::INFO_ECHO = Rgba8(255, 0, 255, 255);
 Rgba8 const DevConsole::INPUT_INSERTION_POINT = Rgba8::WHITE;
 
 DevConsoleLine::DevConsoleLine(Rgba8 color, std::string text)
@@ -91,14 +92,14 @@ void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand
 {
 	if (echoCommand)
 	{
-		AddLine(Rgba8(255,0,255,255), consoleCommandText);
+		AddLine(INFO_ECHO, consoleCommandText);
 	}
 	m_commandHistory.push_back(consoleCommandText);
-	m_historyIndex= (int)m_inputText.size()-1;
+	m_historyIndex= (int)m_commandHistory.size()-1;
  	std::string eventName;
  	EventArgs args;
 	std::vector<std::string> registeredCommands = g_theEventSystem->GetAllRegisteredCommands();
- 	Strings commandLine = SplitStringOnDelimiter(consoleCommandText, ' ');
+ 	Strings commandLine = SplitStringWithQuotes(consoleCommandText, ' ',true);
 	if ((int)commandLine.size() == 1)
 	{
 		for (int i = 0; i < (int)registeredCommands.size(); ++i)
@@ -115,8 +116,8 @@ void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand
 	{
 		for (int i = 1; i < (int)commandLine.size(); ++i)
 		{
-			Strings keyAndValue = SplitStringOnDelimiter(commandLine[i], '=');
-			if ((int)keyAndValue.size() == 2)
+			Strings keyAndValue = SplitStringWithQuotes(commandLine[i], '=');
+			if ((int)keyAndValue.size() >= 2)
 			{
 				args.SetValue(keyAndValue[0], keyAndValue[1]);
 			}
@@ -190,6 +191,12 @@ Camera const* DevConsole::GetCamera() const
 	return m_config.m_camera;
 }
 
+void DevConsole::SetConfig(DevConsoleConfig const& config)
+{
+	m_config = config;
+}
+
+
 void DevConsole::ToggleOpen()
 {
 	m_isOpen = !m_isOpen;
@@ -245,29 +252,32 @@ bool DevConsole::Event_KeyPressed(EventArgs& args)
 			{
 				g_theConsole->m_historyIndex--;
 			}
-			if (g_theConsole->m_historyIndex < 0 )
+			if (g_theConsole->m_historyIndex < 0)
 			{
 				g_theConsole->m_historyIndex = 0;
 			}
-			if (g_theConsole->m_historyIndex >= (int)g_theConsole->m_commandHistory.size())
+			if (g_theConsole->m_commandHistory.size() > 0)
 			{
-				g_theConsole->m_historyIndex = (int)g_theConsole->m_commandHistory.size()-1;
-			}
 				g_theConsole->m_inputText = g_theConsole->m_commandHistory[g_theConsole->m_historyIndex];
+				g_theConsole->m_insertionPointPosition = (int)g_theConsole->m_inputText.length();
+			}
 		}
 		if (keyCode == KEYCODE_DOWNARROW)
 		{
-			g_theConsole->m_historyIndex++;
-			if (g_theConsole->m_historyIndex < 0 )
+			if (g_theConsole->m_inputText != "")
 			{
-				g_theConsole->m_historyIndex = 0;
-			}
-			if (g_theConsole->m_historyIndex >= (int)g_theConsole->m_commandHistory.size())
-			{
-				g_theConsole->m_historyIndex = (int)g_theConsole->m_commandHistory.size()-1;
+				g_theConsole->m_historyIndex++;
+				if (g_theConsole->m_historyIndex >= (int)g_theConsole->m_commandHistory.size())
+				{
+					g_theConsole->m_historyIndex = (int)g_theConsole->m_commandHistory.size() - 1;
+				}
+				if (g_theConsole->m_commandHistory.size() > 0)
+				{
+					g_theConsole->m_inputText = g_theConsole->m_commandHistory[g_theConsole->m_historyIndex];
+					g_theConsole->m_insertionPointPosition = (int)g_theConsole->m_inputText.length();
+				}
 			}
 
-				g_theConsole->m_inputText = g_theConsole->m_commandHistory[g_theConsole->m_historyIndex];
 		}
 
 		if (keyCode == KEYCODE_RIGHTARROW)
@@ -318,9 +328,9 @@ bool DevConsole::Event_KeyPressed(EventArgs& args)
 bool DevConsole::Event_CharInput(EventArgs& args)
 {
 	unsigned char keyCode = (unsigned char)args.GetValue("CharCode", -1);
-	std::string inputChar(1, keyCode);
+	//std::string inputChar(1, keyCode);
 
-	if (inputChar=="·" ||inputChar=="~"|| inputChar == "`" || keyCode<32 || keyCode >126)
+	if (keyCode=='·' ||keyCode=='~'|| keyCode == '`' || keyCode<32 || keyCode >126)
 	{
 		return false;
 	}
@@ -379,13 +389,18 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 	if (m_insertionPointVisible)
 	{
 		std::vector<Vertex_PCU> insertionPointVerts;
+		renderer.SetDepthMode(DepthMode::DISABLED);
+		renderer.SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
 		AddVertsForLineSegment2D(insertionPointVerts, textBounds.m_mins + Vec2(m_insertionPointPosition * lineHeight * fontAspect + 2.f, 0.f), textBounds.m_mins + Vec2(m_insertionPointPosition * lineHeight * fontAspect + 2.f, lineHeight), 2.f, Rgba8::WHITE);
+		renderer.SetModelConstants();
 		renderer.BindTexture(nullptr);
 		renderer.DrawVertexArray((int)insertionPointVerts.size(), insertionPointVerts.data());
+		renderer.SetDepthMode(DepthMode::ENABLED);
+		renderer.SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 	}
 
 	font.AddVertsForTextBox2D(textVerts, textBounds, lineHeight, m_inputText, Rgba8::BLACK, fontAspect, Vec2(0.f, 0.f), TextBoxMode::OVERRUN,100,Vec2(0.8f,0.8f));
-	font.AddVertsForTextBox2D(textVerts, textBounds, lineHeight, m_inputText, INPUT_TEXT, fontAspect, Vec2(0.f, 0.f), TextBoxMode::OVERRUN);
+	font.AddVertsForTextBox2D(textVerts, textBounds, lineHeight, m_inputText, INPUT_TEXT, fontAspect, Vec2(0.f, 0.f), TextBoxMode::OVERRUN,100,Vec2(0.8f,0.8f));
 	renderer.BindTexture(&font.GetTexture());
 	renderer.DrawVertexArray((int)textVerts.size(), textVerts.data());
 

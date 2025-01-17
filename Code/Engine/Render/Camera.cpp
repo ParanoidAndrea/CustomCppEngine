@@ -1,7 +1,6 @@
 #include "Camera.hpp"
-
 #include "Engine/Core/ErrorWarningAssert.hpp"
-
+#include "Engine/Math/MathUtils.hpp"
 Camera::Camera(Vec2 const& bottomLeft, Vec2 const& topRight)
 	:m_orthographicBottomLeft(bottomLeft),
 	m_orthographicTopRight(topRight)
@@ -164,4 +163,26 @@ EulerAngles Camera::GetCameraOrientation() const
 Vec3 Camera::GetCameraPosition() const
 {
 	return m_position;
+}
+
+float Camera::GetCameraFOV() const
+{
+	return m_perspectiveFOV;
+}
+
+
+Vec3 const Camera::GetPerspectiveWorldPos(Vec2 const& screenPos) const
+{
+	Vec3 iBasis, jBasis, kBasis;
+	m_orientation.GetAsVectors_IFwd_JLeft_KUp(iBasis, jBasis, kBasis);
+
+	float cameraToPlaneDistance = -m_position.z / iBasis.z;
+	Vec3 worldPos = m_position + iBasis * cameraToPlaneDistance;
+	float h = 2.f * cameraToPlaneDistance * TanDegrees(m_perspectiveFOV * 0.5f);
+	float w = h * m_perspectiveAspect;
+
+	worldPos -= jBasis * (screenPos.x - 0.5f) * w;
+	worldPos += kBasis * (screenPos.y - 0.5f) * h;
+
+	return worldPos;
 }

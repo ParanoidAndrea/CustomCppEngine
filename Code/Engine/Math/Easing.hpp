@@ -24,6 +24,7 @@ float SmoothStop4  (float t);
 float SmoothStop5  (float t);
 float SmoothStop6(float t);
 
+float SmoothStep(float edge0, float edge1, float x);
 float SmoothStep3(float t);
 float SmoothStep5(float t);
 float Hesitate3(float t);

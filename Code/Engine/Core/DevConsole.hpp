@@ -24,7 +24,7 @@ struct DevConsoleConfig
 	std::string m_fontName = "SquirrelFixedFont";
 	float m_fontAspect = 0.7f;
 	float m_lineHeight = 20.f;
-	float m_linesOnScreen = 30.5f;
+	float m_linesOnScreen = 40.f;
 	int m_frameNumberPrinted = 0;
 	double m_timePrinted = 0.f;
 };
@@ -48,7 +48,7 @@ public:
 	void AddLineWithLineAndFrameNumber(Rgba8 const& color, int lineNumber);
 	void Render (AABB2 bounds = AABB2(Vec2(),Vec2(1600.f,800.f)) , Renderer* rendererOverride = nullptr) const;
 	Camera const* GetCamera() const;
-
+	void SetConfig(DevConsoleConfig const& config);
 // 	DevConsoleMode GetMode() const;
 // 	void SetMode(DevConsoleMode mode);
 // 	void ToggleMode(DevConsoleMode mode);
@@ -62,6 +62,7 @@ public:
 	static const Rgba8 INFO_CONSOLE;
 	static const Rgba8 INPUT_TEXT;
 	static const Rgba8 INPUT_INSERTION_POINT;
+	static const Rgba8 INFO_ECHO;
 
 	static bool Event_KeyPressed(EventArgs& args); // Handle key input.
 	static bool Event_CharInput(EventArgs& args); // Handle char input by appending valid characters to our current input line.

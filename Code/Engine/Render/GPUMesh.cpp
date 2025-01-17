@@ -24,7 +24,7 @@ GPUMesh::~GPUMesh()
 
 void GPUMesh::Create(CPUMesh const* cpuMesh)
 {
-	auto createGPUMeshStartTime = std::chrono::high_resolution_clock::now();
+
 	size_t indexBuffersize = sizeof(unsigned int) * (int)cpuMesh->m_indexes.size();
 	size_t vertexBuffersize = sizeof(Vertex_PCUTBN) * (int)cpuMesh->m_vertexes.size();
 	m_indexBuffer = m_renderer->CreateIndexBuffer(indexBuffersize);
@@ -35,9 +35,7 @@ void GPUMesh::Create(CPUMesh const* cpuMesh)
 
 	m_indexBuffer->SetIndexesSize((int)cpuMesh->m_indexes.size());
 
-	auto createGPUMeshEndTime = std::chrono::high_resolution_clock::now();
-	auto createGPUMeshTime = std::chrono::duration_cast<std::chrono::microseconds>(createGPUMeshEndTime - createGPUMeshStartTime).count();
-	PrintTextToDebug(Stringf("Created GPU Mesh         time: %.8fs\n", (double)createGPUMeshTime/1000000.0));
+
 }
 
 void GPUMesh::Render() const

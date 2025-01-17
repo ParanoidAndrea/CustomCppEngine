@@ -54,17 +54,17 @@ void AddVertsForDisc2D(std::vector<Vertex_PCU>& verts, Vec2 const& center, float
 	}
 }
 
-void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color)
+void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color,float zOrder)
 {
 	constexpr int NUM_TRIS = 2;
 	constexpr int NUM_VERTS = 3 * NUM_TRIS;
 
 	verts.reserve(verts.size() + NUM_VERTS);
 
-	Vec3 BL = Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f);
-	Vec3 BR = Vec3(bounds.m_maxs.x, bounds.m_mins.y, 0.f);
-	Vec3 TR = Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f);
-	Vec3 TL = Vec3(bounds.m_mins.x, bounds.m_maxs.y, 0.f);
+    Vec3 BL = Vec3(bounds.m_mins.x, bounds.m_mins.y, zOrder);
+    Vec3 BR = Vec3(bounds.m_maxs.x, bounds.m_mins.y, zOrder);
+    Vec3 TR = Vec3(bounds.m_maxs.x, bounds.m_maxs.y, zOrder);
+    Vec3 TL = Vec3(bounds.m_mins.x, bounds.m_maxs.y, zOrder);
 
 	verts.push_back(Vertex_PCU(BL, color, Vec2(0.f, 0.f)));
 	verts.push_back(Vertex_PCU(BR, color, Vec2(1.f, 0.f)));
@@ -112,17 +112,28 @@ void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, OBB2 const& box, Rgba8 con
 	verts.push_back(Vertex_PCU(Vec3(cornerPoints[2].x, cornerPoints[2].y, 0.f), color, Vec2(0.f, 1.f)));
 }
 
-void AddVertsForLineSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& startPos, Vec2 const& endPos, float thickness, Rgba8 const& color)
+void AddVertsForLineSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start, Vec2 const& end, float thickness, Rgba8 const& color, bool isDrawingInside)
 {
-	Vec2 Distance = endPos - startPos;
+	Vec2 Distance = end - start;
 	Vec2 D = Distance.GetNormalized();
 	float radius = thickness * 0.5f;
 	Vec2 fwd = radius * D;
 	Vec2 fwdleft = fwd.GetRotated90Degrees();
-	Vec2 APos = endPos + fwd + fwdleft;
-	Vec2 BPos = startPos - fwd + fwdleft;
-	Vec2 CPos = startPos - fwd - fwdleft;
-	Vec2 DPos = endPos + fwd - fwdleft;
+	Vec2 APos, BPos, CPos, DPos;
+	if (isDrawingInside)
+	{
+        APos = start - fwdleft * 2.f;
+        BPos = start + fwdleft * 2.f;
+        CPos = end + fwdleft * 2.f;
+        DPos = end - fwdleft * 2.f;
+	}
+	else
+	{
+		APos = start - fwd - fwdleft;
+		BPos = start - fwd + fwdleft;
+		CPos = end + fwd + fwdleft;
+		DPos = end + fwd - fwdleft;
+	}
 	int vertsNum = (int)verts.size() + 6;
 	verts.reserve(vertsNum);
 	verts.push_back(Vertex_PCU(Vec3(APos.x, APos.y, 0.f), color, Vec2(1.f, 1.f)));
@@ -200,10 +211,10 @@ void AddVertsForLaser2D(std::vector<Vertex_PCU>& verts, Vec2 const& startPos, Ve
 
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& UVs )
 {
-	constexpr int NUM_TRIS = 2;
-	constexpr int NUM_VERTS = 3 * NUM_TRIS;
+	//constexpr int NUM_TRIS = 2;
+	//constexpr int NUM_VERTS = 3 * NUM_TRIS;
 
-	verts.reserve(verts.size() + NUM_VERTS);
+	//verts.reserve(verts.size() + NUM_VERTS);
 
 	verts.push_back(Vertex_PCU(bottomLeft, color, UVs.m_mins));
 	verts.push_back(Vertex_PCU(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y)));
@@ -302,6 +313,23 @@ void AddVertsForQuad3D(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned i
 	verts.push_back(Vertex_PCUTBN(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3(), Vec3(), bottomRightNormal));
 	verts.push_back(Vertex_PCUTBN(topRight, color, UVs.m_maxs, Vec3(), Vec3(), topRightNormal));
 	verts.push_back(Vertex_PCUTBN(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3(), Vec3(),topLeftNormal));
+}
+
+void AddVertsForQuad3D(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Vec3 const& bottomLeftNormal, Vec3 const& bottomRightNormal, Vec3 const& topRightNormal, Vec3 const& topLeftNormal, Rgba8 const& blColor, Rgba8 const& brColor, Rgba8 const& trColor, Rgba8 const& tlColor, AABB2 const& UVs)
+{
+    unsigned int indexStart = (unsigned int)verts.size();
+    indexes.push_back(indexStart);
+    indexes.push_back(indexStart + 1);
+    indexes.push_back(indexStart + 2);
+    indexes.push_back(indexStart);
+    indexes.push_back(indexStart + 2);
+    indexes.push_back(indexStart + 3);
+
+
+    verts.push_back(Vertex_PCUTBN(bottomLeft, blColor, UVs.m_mins, Vec3(), Vec3(), bottomLeftNormal));
+	verts.push_back(Vertex_PCUTBN(bottomRight, brColor , Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3(), Vec3(), bottomRightNormal));
+    verts.push_back(Vertex_PCUTBN(topRight, trColor, UVs.m_maxs, Vec3(), Vec3(), topRightNormal));
+    verts.push_back(Vertex_PCUTBN(topLeft, tlColor, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3(), Vec3(), topLeftNormal));
 }
 
 void AddVertsForLineQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& UVs, float thickness)
@@ -660,7 +688,10 @@ void CalculateTangentSpaceBasisVectors(std::vector<Vertex_PCUTBN>& verts, std::v
 			float deltaV0 = v1 - v0;
 			float deltaV1 = v2 - v0;
 			float r = 1.f / ((deltaV1 * deltaU0) - (deltaU1 * deltaV0));
-			
+			if (fabs(r) < FLT_EPSILON)
+			{
+				continue;
+			}
 			Vec3 sharedTangent = r * ((deltaV1 * e0) - (deltaV0 * e1));
 			sharedTangent.Normalize();
 			Vec3 sharedBitangent = r * ((deltaU0 * e1) - (deltaU1 * e0));
@@ -688,6 +719,150 @@ void CalculateTangentSpaceBasisVectors(std::vector<Vertex_PCUTBN>& verts, std::v
 			vert.m_tangent = (vert.m_tangent - vert.m_normal * DotProduct3D(vert.m_normal, vert.m_tangent)).GetNormalized();
 			vert.m_bitangent = CrossProduct3D(vert.m_normal, vert.m_tangent).GetNormalized();
 		}
+	}
+}
+
+void AddVertsForHexgonXY3D(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes, Vec2 const& centerPos, float inradius, float thickness, Rgba8 const& color, bool isFilled, Rgba8 const& filledColor)
+{
+	constexpr float deltaDegrees = 60.f;
+	unsigned int innerIndexStart = (unsigned int)verts.size();
+	unsigned int outerIndexStart = innerIndexStart + 6;
+	constexpr float CIRCUMRADIUS_FACTOR = 2.f / 1.73205f;
+	float circumradius = CIRCUMRADIUS_FACTOR * inradius;
+	Vec3 innerPos[6], outerPos[6];
+	for (int i = 0; i < 6; ++i)
+	{
+		float degree = i * deltaDegrees;
+        innerPos[i] = Vec3(centerPos.x + (circumradius - 0.5f * thickness) * CosDegrees(degree), centerPos.y + (circumradius - 0.5f * thickness) * SinDegrees(degree), 0.f);
+		verts.push_back(Vertex_PCU(innerPos[i], color, Vec2()));
+	}
+	if (!isFilled)
+	{
+        for (int i = 0; i < 6; ++i)
+        {
+            float degree = i * deltaDegrees;
+            outerPos[i] = Vec3(centerPos.x + (circumradius + 0.5f * thickness) * CosDegrees(degree), centerPos.y + (circumradius + 0.5f * thickness) * SinDegrees(degree), 0.f);
+            verts.push_back(Vertex_PCU(outerPos[i], color, Vec2()));
+
+        }
+		for (int i = 0; i < 6; ++i)
+		{
+			int indexStart = i;
+			int indexEnd = (i == 5) ? 0 : i + 1;
+			indexes.push_back(innerIndexStart + indexStart);
+			indexes.push_back(outerIndexStart + indexStart);
+			indexes.push_back(outerIndexStart + indexEnd);
+			indexes.push_back(innerIndexStart + indexStart);
+			indexes.push_back(outerIndexStart + indexEnd);
+			indexes.push_back(innerIndexStart + indexEnd);
+		}
+	}
+	else
+	{
+		unsigned int indexStart = (unsigned int)verts.size();
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[0], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[1], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[2], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[3], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[4], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[5], filledColor, Vec2()));
+		indexes.push_back(indexStart + 0);
+		indexes.push_back(indexStart + 1);
+		indexes.push_back(indexStart + 2);
+		indexes.push_back(indexStart + 0);
+		indexes.push_back(indexStart + 2);
+		indexes.push_back(indexStart + 3);
+		indexes.push_back(indexStart + 0);
+		indexes.push_back(indexStart + 3);
+		indexes.push_back(indexStart + 4);
+		indexes.push_back(indexStart + 0);
+		indexes.push_back(indexStart + 4);
+		indexes.push_back(indexStart + 5);
+		indexes.push_back(indexStart + 0);
+		indexes.push_back(indexStart + 5);
+		indexes.push_back(indexStart + 6);
+		indexes.push_back(indexStart + 0);
+		indexes.push_back(indexStart + 6);
+		indexes.push_back(indexStart + 1);
+	}
+// 	for (int pointNums = 0; pointNums < 6; ++pointNums)
+// 	{
+// 		float startDegrees = deltaDegrees * (float)pointNums;
+// 		float endDegrees = deltaDegrees * (float)(pointNums + 1);
+// 		Vec3 innerStartPos = Vec3(centerPos.x + (radius - 0.5f * thickness) * CosDegrees(startDegrees), centerPos.y + (radius - 0.5f * thickness) * SinDegrees(startDegrees), 0.f);
+// 		Vec3 innerEndPos = Vec3(centerPos.x + (radius - 0.5f * thickness) * CosDegrees(endDegrees), centerPos.y + (radius - 0.5f * thickness) * SinDegrees(endDegrees), 0.f);
+// 		Vec3 outerStartPos = Vec3(centerPos.x + (radius + 0.5f * thickness) * CosDegrees(startDegrees), centerPos.y + (radius + 0.5f * thickness) * SinDegrees(startDegrees), 0.f);
+// 		Vec3 outerEndPos = Vec3(centerPos.x + (radius + 0.5f * thickness) * CosDegrees(endDegrees), centerPos.y + (radius + 0.5f * thickness) * SinDegrees(endDegrees), 0.f);
+// 
+// 		//verts.push_back(Vertex_PCU(innerStartPos, color, Vec2(1.f, 0.f)));
+// 		//verts.push_back(Vertex_PCU(innerEndPos, color, Vec2()));
+// 		//verts.push_back(Vertex_PCU(outerEndPos, color, Vec2(0.f, 1.f)));
+// 		//verts.push_back(Vertex_PCU(innerStartPos, color, Vec2(1.f, 0.f)));
+// 		//verts.push_back(Vertex_PCU(outerEndPos, color, Vec2(0.f, 1.f)));
+// 		//verts.push_back(Vertex_PCU(outerStartPos, color, Vec2(1.f, 1.f)));
+// 		//AddVertsForQuad3D(verts, innerStartPos, innerEndPos, outerEndPos, outerStartPos, color,AABB2(Vec2(),Vec2(1.f,1.f)));
+// 
+// 	}
+}
+
+
+void AddVertsForHexgonXY3D(std::vector<Vertex_PCU>& verts, Vec2 const& centerPos, float inradius, float thickness, Rgba8 const& color, bool isFilled, Rgba8 const& filledColor, float height)
+{
+	constexpr float deltaDegrees = 60.f;
+	constexpr float CIRCUMRADIUS_FACTOR = 2.f / 1.73205f;
+	float circumradius = CIRCUMRADIUS_FACTOR * inradius;
+	Vec3 innerPos[6], outerPos[6];
+	for (int i = 0; i < 6; ++i)
+	{
+		float degree = i * deltaDegrees;
+		innerPos[i] = Vec3(centerPos.x + (circumradius - 0.5f * thickness) * CosDegrees(degree), centerPos.y + (circumradius - 0.5f * thickness) * SinDegrees(degree), height);
+		if (isFilled)
+		{
+			innerPos[i].z = -0.001f;
+		}
+	}
+
+	for (int i = 0; i < 6; ++i)
+	{
+		float degree = i * deltaDegrees;
+		outerPos[i] = Vec3(centerPos.x + (circumradius + 0.5f * thickness) * CosDegrees(degree), centerPos.y + (circumradius + 0.5f * thickness) * SinDegrees(degree), height);
+		if (isFilled)
+		{
+			outerPos[i].z = -0.001f;
+		}
+	}
+	for (int i = 0; i < 6; ++i)
+	{
+		int indexStart = i;
+		int indexEnd = (i == 5) ? 0 : i + 1;
+		verts.push_back(Vertex_PCU(innerPos[indexStart], color, Vec2()));
+		verts.push_back(Vertex_PCU(outerPos[indexStart], color, Vec2()));
+		verts.push_back(Vertex_PCU(outerPos[indexEnd], color, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[indexStart], color, Vec2()));
+		verts.push_back(Vertex_PCU(outerPos[indexEnd], color, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[indexEnd], color, Vec2()));
+	}
+	if (isFilled)
+	{
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[0], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[1], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[1], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[2], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[2], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[3], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[3], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[4], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[4], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[5], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(Vec3(centerPos), filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[5], filledColor, Vec2()));
+		verts.push_back(Vertex_PCU(innerPos[0], filledColor, Vec2()));
 	}
 }
 

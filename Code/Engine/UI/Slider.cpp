@@ -4,16 +4,16 @@
 #include "Engine/Render/BitmapFont.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/Core/TimeR.hpp"
+#include "Engine/Core/Timer.hpp"
 Slider::Slider(AABB2 const& screenArea, std::string const& label, std::string const& fontName, std::string const& eventName, Renderer* renderer, AudioSystem* audioSystem,float defaultValue, float minValue, float maxValue)
 	:m_screenArea(screenArea),
 	m_label(label),
 	m_eventName(eventName),
-	m_renderer(renderer),
 	m_audioSystem(audioSystem),
 	m_value(defaultValue),
 	m_minValue(minValue),
-	m_maxValue(maxValue)
+	m_maxValue(maxValue),
+	Widget(renderer)
 {
 	if (m_audioSystem)
 	{
@@ -37,6 +37,10 @@ void Slider::Update()
 	{
 		m_audioTimer->Stop();	
 		m_audioSystem->StartSound(m_sliderHoverID, false, m_audioSystem->GetUIVolume(), 0.f, 1.f, false, SoundClass::UI);
+	}
+	for (size_t i = 0; i < m_children.size(); ++i)
+	{
+		m_children[i] -> Update();
 	}
 }
 float Slider::GetCurrentFraction() const
@@ -89,6 +93,10 @@ void Slider::Render() const
 	m_bitmapFont->AddVertsForTextBox2D(textVerts, m_screenArea.GetAABB2ForNormalizePoints(Vec2(0.8f, 0.f), Vec2(1.f, 1.f)), 25.f, Stringf("%.1f",m_value), Rgba8(255, 255, 255, 255), 1.f, Vec2(1.f,0.5f), TextBoxMode::OVERRUN);
 	m_renderer->BindTexture(&m_bitmapFont->GetTexture());
 	m_renderer->DrawVertexArray((int)textVerts.size(), textVerts.data());
+	for (size_t i = 0; i < m_children.size(); ++i)
+	{
+		m_children[i]->Render();
+	}
 }
 
 bool Slider::IsCursorInSliderArea() const

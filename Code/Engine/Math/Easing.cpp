@@ -110,6 +110,12 @@ float SmoothStop6(float t)
 	return 1.f - ((u * u) * (u * u) * (u * u));
 }
 
+float SmoothStep(float edge0, float edge1, float x)
+{
+	x = GetClamped((x - edge0) / (edge1 - edge0), 0.f, 1.f);
+	return SmoothStep3(x);
+}
+
 float SmoothStep3(float t)
 {
 	//return ComputeQuinticBezier1D(0.f, 0.f, 0.f, 1.f, 1.f, 1.f, t);

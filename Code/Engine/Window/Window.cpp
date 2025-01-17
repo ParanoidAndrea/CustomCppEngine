@@ -160,33 +160,69 @@ void Window::CreateOSWindow()
 	float desktopAspect = desktopWidth / desktopHeight;
 
 	// Calculate maximum client size (as some % of desktop size)
-	constexpr float maxClientFractionOfDesktop = 0.90f;
-	float clientWidth = desktopWidth * maxClientFractionOfDesktop;
-	float clientHeight = desktopHeight * maxClientFractionOfDesktop;
-	if (m_config.m_aspectRatio > desktopAspect)
+	constexpr float maxClientFractionOfDesktop = 0.9f;
+	float clientWidth = 0.f;
+	float clientHeight = 0.f;
+	if (m_config.m_isFullscreen == false)
 	{
-		// Client window has a wider aspect than desktop; shrink client height to match its width
-		clientHeight = clientWidth / m_config.m_aspectRatio;
+		if (m_config.m_screenSize != IntVec2(-1, -1))
+		{
+			clientWidth = (float)m_config.m_screenSize.x;
+			clientHeight = (float)m_config.m_screenSize.y;
+			m_config.m_aspectRatio = clientWidth / clientHeight;
+		}
+		else
+		{
+			clientWidth = desktopWidth * maxClientFractionOfDesktop;
+			clientHeight = desktopHeight * maxClientFractionOfDesktop;
+			if (m_config.m_aspectRatio > desktopAspect)
+			{
+				// Client window has a wider aspect than desktop; shrink client height to match its width
+				clientHeight = clientWidth / m_config.m_aspectRatio;
+			}
+			else
+			{
+				// Client window has a taller aspect than desktop; shrink client width to match its height
+				clientWidth = clientHeight * m_config.m_aspectRatio;
+			}
+		}
 	}
 	else
 	{
-		// Client window has a taller aspect than desktop; shrink client width to match its height
-		clientWidth = clientHeight * m_config.m_aspectRatio;
+		clientWidth = desktopWidth;
+		clientHeight = desktopHeight;
 	}
 	m_clientDimensions = IntVec2((int)clientWidth, (int)clientHeight);
 
-	// Calculate client rect bounds by centering the client area
-	float clientMarginX = 0.5f * (desktopWidth - clientWidth);
-	float clientMarginY = 0.5f * (desktopHeight - clientHeight);
-	RECT clientRect;
-	clientRect.left = (int)clientMarginX;
-	clientRect.right = clientRect.left + (int)clientWidth;
-	clientRect.top = (int)clientMarginY;
-	clientRect.bottom = clientRect.top + (int)clientHeight;
+	RECT clientRect = {};
+	if (m_config.m_isFullscreen)
+	{
+		clientRect.left = 0;
+		clientRect.right = (int)desktopWidth;
+		clientRect.top = 0;
+		clientRect.bottom = (int)desktopHeight;
+	}
+	else if (m_config.m_screenPos == IntVec2(-1, -1) || m_config.m_isFullscreen)
+	{
+		// Calculate client rect bounds by centering the client area
+		float clientMarginX = 0.5f * (desktopWidth - clientWidth);
+		float clientMarginY = 0.5f * (desktopHeight - clientHeight);
 
-	// #SD1ToDo: Add support for full screen mode (requires different window style flags than windowed mode)
-	const DWORD windowStyleFlags = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
-	const DWORD windowStyleExFlags = WS_EX_APPWINDOW;
+		clientRect.left = (int)clientMarginX;
+		clientRect.right = clientRect.left + (int)clientWidth;
+		clientRect.top = (int)clientMarginY;
+		clientRect.bottom = clientRect.top + (int)clientHeight;
+	}
+	else
+	{
+		clientRect.left	   = m_config.m_screenPos.x;
+		clientRect.right   = (int)clientWidth + clientRect.left;
+		clientRect.top	   = m_config.m_screenPos.y;
+		clientRect.bottom  = (int)clientHeight + clientRect.top;
+	}
+
+	const DWORD windowStyleFlags   = m_config.m_isFullscreen? WS_POPUP : WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
+	const DWORD windowStyleExFlags = m_config.m_isFullscreen? WS_EX_TOPMOST : WS_EX_APPWINDOW;
 	RECT windowRect = clientRect;
 	AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
 
@@ -229,6 +265,11 @@ void Window::CreateOSWindow()
 
 	HCURSOR cursor = LoadCursor(NULL, IDC_ARROW);
 	SetCursor(cursor);
+
+	GetClientRect(m_windowHandle, &desktopRect);
+	m_clientDimensions.x = desktopRect.right - desktopRect.left;
+	m_clientDimensions.y = desktopRect.bottom - desktopRect.top;
+
 }
 
 void Window::RunMessagePump()
@@ -256,7 +297,17 @@ IntVec2 Window::GetClientDimensions() const
 Vec2 const Window::GetMouseScreenPos() const
 {
 	Vec2 normalizedCursorPos = GetNormalizedCursorPos();
-	return Vec2(normalizedCursorPos.x * m_config.m_screenSize.x, normalizedCursorPos.y * m_config.m_screenSize.y);
+	return Vec2(normalizedCursorPos.x * (float)m_clientDimensions.x, normalizedCursorPos.y * (float)m_clientDimensions.y);
+}
+
+Vec2 const Window::GetScreenSize() const
+{
+	return Vec2((float)m_clientDimensions.x,(float)m_clientDimensions.y);
+}
+
+AABB2 const Window::GetScreenBound() const
+{
+	return AABB2(Vec2::ZERO, GetScreenSize());
 }
 
 std::string const& Window::OpenFileDialogAndGetFilename() const
@@ -306,6 +357,11 @@ void Window::ShowWindowLastError()
 		ERROR_RECOVERABLE(messageBuffer);
 		LocalFree(messageBuffer);
 	}
+}
+
+float Window::GetAspectRatio() const
+{
+	return m_config.m_aspectRatio;
 }
 
 Vec2 Window::GetNormalizedCursorPos() const

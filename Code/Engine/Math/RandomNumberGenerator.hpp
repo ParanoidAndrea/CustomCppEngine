@@ -4,6 +4,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Core/Rgba8.hpp"
 class RandomNumberGenerator
 {
 public:
@@ -20,6 +21,7 @@ public:
 	float RollRandomFloatRange(FloatRange range);
 	Vec3 RollRandomVector3DInRange(Vec3 mins, Vec3 maxs);
 	Vec2 RollRandomVector2DInBox(AABB2 const& box);
+	Rgba8 RollRandomColor(Rgba8 const& color1, Rgba8 const& color2);
 	bool RollRandomBool();
 private:
 	// will replace rand() with noise

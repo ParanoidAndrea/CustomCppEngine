@@ -17,6 +17,7 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Render/IndexBuffer.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Render/TextureArray.hpp"
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <dxgi.h>
@@ -126,6 +127,14 @@ void Renderer::Shutdown()
  			m_loadedTextures[i] = nullptr;
  		}
  	}
+    for (int i = 0; i < (int)m_loadedTextureArrays.size(); ++i)
+    {
+        if (m_loadedTextureArrays[i])
+        {
+            delete m_loadedTextureArrays[i];
+            m_loadedTextureArrays[i] = nullptr;
+        }
+    }
 	for (int i = 0; i < (int)m_blurUpTextures.size(); ++i)
 	{
 		if (m_blurUpTextures[i])
@@ -231,7 +240,7 @@ void Renderer::EndCamera(const Camera& camera)
 }
 
 
-Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
+Texture* Renderer::CreateOrGetTextureFromFile(const char* imageFilePath, bool isMipMapping /*= false*/)
 {
 	// See if we already have this texture previously loaded
 	Texture* existingTexture = GetTextureForFileName(imageFilePath);
@@ -241,7 +250,7 @@ Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
 	}
 
 	// Never seen this texture before!  Let's load it.
-	Texture* newTexture = CreateTextureFromFile(imageFilePath);
+	Texture* newTexture = CreateTextureFromFile(imageFilePath, isMipMapping);
 	return newTexture;
 }
 
@@ -302,14 +311,21 @@ Texture* Renderer::GetTextureForFileName(char const* imageFilePath)
 	return nullptr;
 }
 
-Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
+Texture* Renderer::CreateTextureFromFile(char const* imageFilePath, bool isMipMapping /*= false*/)
 {
 
 	Image* image = CreateImageFromFile(imageFilePath);
 	// Check if the load was successful
 	GUARANTEE_OR_DIE(image, Stringf("Failed to load image \"%s\"", imageFilePath));
-	
-	Texture* newTexture = CreateTextureFromImage(*image);
+	Texture* newTexture = nullptr;
+	if (isMipMapping)
+	{
+		newTexture = CreateMipMappingTextureFromImage(*image);
+	}
+	else
+	{
+		newTexture = CreateTextureFromImage(*image);
+	}
 	//Texture* newTexture = CreateTextureFromData(imageFilePath, dimensions, bytesPerTexel, texelData);
 
 	delete image;
@@ -378,10 +394,8 @@ Texture* Renderer::CreateTextureFromImage(const Image& image)
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDesc.SampleDesc.Count = 1;
-	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-
+	textureDesc.Usage = D3D11_USAGE_IMMUTABLE ;
 	D3D11_SUBRESOURCE_DATA textureData;
 	textureData.pSysMem = image.GetRawData();
 	textureData.SysMemPitch = 4 * image.GetDimensions().x;
@@ -398,6 +412,53 @@ Texture* Renderer::CreateTextureFromImage(const Image& image)
 	{
 		ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()));
 	}
+	
+
+	m_loadedTextures.push_back(newTexture);
+	return newTexture;
+}
+
+Texture* Renderer::CreateMipMappingTextureFromImage(Image const& image)
+{
+	Texture* newTexture = new Texture();
+	newTexture->m_name = image.GetImageFilePath();
+	newTexture->m_dimensions = image.GetDimensions();
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = image.GetDimensions().x;
+	textureDesc.Height = image.GetDimensions().y;
+	textureDesc.MipLevels = 0;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+	
+	//D3D11_SUBRESOURCE_DATA textureData;
+	//textureData.pSysMem = image.GetRawData();
+	//textureData.SysMemPitch = 4 * image.GetDimensions().x;
+
+	HRESULT hr;
+	hr = m_device->CreateTexture2D(&textureDesc, nullptr, &newTexture->m_texture);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()));
+	}
+	m_deviceContext->UpdateSubresource(newTexture->m_texture, 0u, nullptr, image.GetRawData(), 4 * image.GetDimensions().x, 0u);
+	// Create shader resource view with all mip levels
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = UINT_MAX; // Use all mip levels
+
+	hr = m_device->CreateShaderResourceView(newTexture->m_texture, &srvDesc, &newTexture->m_shaderResourceView);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", newTexture->m_name.c_str()));
+	}
+	m_deviceContext->GenerateMips(newTexture->m_shaderResourceView);
+
 	m_loadedTextures.push_back(newTexture);
 	return newTexture;
 }
@@ -436,6 +497,168 @@ Texture* Renderer::CreateRenderTexture(IntVec2 const& dimensions, char const* na
 		ERROR_AND_DIE(Stringf("Create shader resouce view failed for \"%s\".", name));
 	}
 	return newRenderTexture;
+}
+
+TextureArray* Renderer::CreateTextureArray(std::vector<Image*>& images, std::string const& textureArrayName)
+{
+    if (images.empty())
+    {
+        return nullptr;
+    }
+
+    // Get dimensions from first valid image
+    IntVec2 dimension;
+    bool foundValidImage = false;
+    for (size_t i = 0; i < images.size(); ++i)
+    {
+        if (images[i])
+        {
+            dimension = images[i]->GetDimensions();
+            foundValidImage = true;
+            break;
+        }
+    }
+
+    if (!foundValidImage)
+    {
+        return nullptr;
+    }
+
+    // Validate dimensions and create a consistent array of images
+    std::vector<Image*> tempImages;
+    for (size_t i = 0; i < images.size(); ++i)
+    {
+        if (images[i] == nullptr)
+        {
+            tempImages.push_back(new Image(dimension, Rgba8::WHITE));
+        }
+        else if (images[i]->GetDimensions() != dimension)
+        {
+            for (auto* img : tempImages)
+            {
+                if (std::find(images.begin(), images.end(), img) == images.end())
+                {
+                    delete img;
+                }
+            }
+            return nullptr;
+        }
+        else
+        {
+            tempImages.push_back(images[i]);
+        }
+    }
+
+    int mipCount = CalculateMipCount(dimension.x, dimension.y);
+
+    // Generate mipmaps for each image on CPU
+    // We'll store all mip levels for each slice in a vector of vectors
+    // mipData[i][m] = vector of bytes for mip m of slice i
+    std::vector<std::vector<std::vector<unsigned char>>> mipData(tempImages.size());
+
+    for (size_t i = 0; i < tempImages.size(); ++i)
+    {
+        int w = dimension.x;
+        int h = dimension.y;
+        const unsigned char* srcData = tempImages[i]->GetRawCharData();
+
+        mipData[i].resize(mipCount);
+        // Mip 0 is the original image
+        mipData[i][0].assign(srcData, srcData + (w * h * 4));
+
+        for (int m = 1; m < mipCount; m++)
+        {
+            mipData[i][m] = GenerateNextMipLevel(mipData[i][m - 1].data(), w, h);
+            w = max(w >> 1, 1);
+            h = max(h >> 1, 1);
+        }
+    }
+
+    TextureArray* newTextureArray = new TextureArray();
+    newTextureArray->m_name = textureArrayName;
+    newTextureArray->m_dimensions = dimension;
+    newTextureArray->m_arraySize = (int)images.size();
+
+    D3D11_TEXTURE2D_DESC textureDesc = {};
+    textureDesc.Width = dimension.x;
+    textureDesc.Height = dimension.y;
+    textureDesc.MipLevels = mipCount;
+    textureDesc.ArraySize = newTextureArray->m_arraySize;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.SampleDesc.Quality = 0;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    textureDesc.CPUAccessFlags = 0;
+    textureDesc.MiscFlags = 0; // No MISC_GENERATE_MIPS since we are providing our own mips
+
+    HRESULT hr = m_device->CreateTexture2D(&textureDesc, nullptr, &newTextureArray->m_textureArray);
+    if (FAILED(hr))
+    {
+        // Clean up
+        for (size_t i = 0; i < tempImages.size(); ++i)
+        {
+            if (tempImages[i] != images[i])
+            {
+                delete tempImages[i];
+            }
+        }
+        delete newTextureArray;
+        ERROR_AND_DIE("Failed to create texture array");
+    }
+
+    // Update subresources for all mip levels
+    for (int i = 0; i < newTextureArray->m_arraySize; i++)
+    {
+        int w = dimension.x;
+        int h = dimension.y;
+        for (int m = 0; m < mipCount; m++)
+        {
+            m_deviceContext->UpdateSubresource(
+                newTextureArray->m_textureArray,
+                D3D11CalcSubresource(m, i, mipCount),
+                nullptr,
+                mipData[i][m].data(),
+                4 * w,
+                0
+            );
+            w = max(w >> 1, 1);
+            h = max(h >> 1, 1);
+        }
+    }
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = textureDesc.Format;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+    srvDesc.Texture2DArray.MostDetailedMip = 0;
+    srvDesc.Texture2DArray.MipLevels = mipCount;
+    srvDesc.Texture2DArray.FirstArraySlice = 0;
+    srvDesc.Texture2DArray.ArraySize = newTextureArray->m_arraySize;
+
+    hr = m_device->CreateShaderResourceView(
+        newTextureArray->m_textureArray,
+        &srvDesc,
+        &newTextureArray->m_shaderResourceView
+    );
+
+    // Clean up temporary images
+    for (size_t i = 0; i < tempImages.size(); ++i)
+    {
+        if (tempImages[i] != images[i])
+        {
+            delete tempImages[i];
+        }
+    }
+
+    if (FAILED(hr))
+    {
+        DX_SAFE_RELEASE(newTextureArray->m_textureArray);
+        delete newTextureArray;
+        ERROR_AND_DIE("Failed to create SRV for texture array");
+    }
+
+    m_loadedTextureArrays.push_back(newTextureArray);
+    return newTextureArray;
 }
 
 void Renderer::CreateDebugModule()
@@ -653,6 +876,7 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, 
 #if defined(ENGINE_DEBUG_RENDER)
 	shaderFlags = D3DCOMPILE_DEBUG;
 	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+	shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
 #endif
 	ID3DBlob* shaderBlob = NULL;
 	ID3DBlob* errorBlob = NULL;
@@ -876,10 +1100,21 @@ void Renderer::SetStatesIfChanged()
 		UINT sampleMask = 0xffffffff;
 		m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
 	}
-	if (m_samplerStates[(int)m_desiredSamplerMode] != m_samplerState)
+	if (m_samplerStates[(int)m_desiredSamplerMode1] != m_samplerState1 && !m_isDoubleSampler)
 	{
-		m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
-		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+		m_samplerState1 = m_samplerStates[(int)m_desiredSamplerMode1];
+		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState1);
+	}
+	else if (m_isDoubleSampler && (m_samplerState1 != m_samplerStates[(int)m_desiredSamplerMode1] || m_samplerState2 != m_samplerStates[(int)m_desiredSamplerMode2]))
+	{
+		m_samplerState1 = m_samplerStates[(int)m_desiredSamplerMode1];
+		m_samplerState2 = m_samplerStates[(int)m_desiredSamplerMode2];
+        ID3D11SamplerState* samplers[2] = {
+			m_samplerState1,
+			m_samplerState2
+        };
+        m_deviceContext->PSSetSamplers(0, 2, samplers);
+
 	}
 	if (m_rasterizerStates[(int)m_desiredRasterizerMode] != m_rasterizerState)
 	{
@@ -1112,6 +1347,69 @@ ID3D11DeviceContext* Renderer::GetDeviceContext() const
 	return m_deviceContext;
 }
 
+int Renderer::CalculateMipCount(int width, int height)
+{
+    int largestDimension = max(width, height);
+    int mipCount = (int)floor(log2((double)largestDimension)) + 1;
+    return mipCount;
+}
+
+std::vector<unsigned char> Renderer::GenerateNextMipLevel(const unsigned char* srcData, int srcWidth, int srcHeight)
+{
+    int dstWidth = max(srcWidth >> 1, 1);
+    int dstHeight = max(srcHeight >> 1, 1);
+
+    std::vector<unsigned char> dstData(dstWidth * dstHeight * 4);
+
+    for (int y = 0; y < dstHeight; ++y)
+    {
+        for (int x = 0; x < dstWidth; ++x)
+        {
+            int srcX = x * 2;
+            int srcY = y * 2;
+
+            // Grab 2x2 block from source
+            // Clamp to edge if width/height is odd
+            int x0 = srcX;
+            int y0 = srcY;
+            int x1 = min(srcX + 1, srcWidth - 1);
+            int y1 = min(srcY + 1, srcHeight - 1);
+
+            unsigned char c00R = srcData[(y0 * srcWidth + x0) * 4 + 0];
+            unsigned char c00G = srcData[(y0 * srcWidth + x0) * 4 + 1];
+            unsigned char c00B = srcData[(y0 * srcWidth + x0) * 4 + 2];
+            unsigned char c00A = srcData[(y0 * srcWidth + x0) * 4 + 3];
+
+            unsigned char c10R = srcData[(y0 * srcWidth + x1) * 4 + 0];
+            unsigned char c10G = srcData[(y0 * srcWidth + x1) * 4 + 1];
+            unsigned char c10B = srcData[(y0 * srcWidth + x1) * 4 + 2];
+            unsigned char c10A = srcData[(y0 * srcWidth + x1) * 4 + 3];
+
+            unsigned char c01R = srcData[(y1 * srcWidth + x0) * 4 + 0];
+            unsigned char c01G = srcData[(y1 * srcWidth + x0) * 4 + 1];
+            unsigned char c01B = srcData[(y1 * srcWidth + x0) * 4 + 2];
+            unsigned char c01A = srcData[(y1 * srcWidth + x0) * 4 + 3];
+
+            unsigned char c11R = srcData[(y1 * srcWidth + x1) * 4 + 0];
+            unsigned char c11G = srcData[(y1 * srcWidth + x1) * 4 + 1];
+            unsigned char c11B = srcData[(y1 * srcWidth + x1) * 4 + 2];
+            unsigned char c11A = srcData[(y1 * srcWidth + x1) * 4 + 3];
+
+            unsigned int rSum = c00R + c10R + c01R + c11R;
+            unsigned int gSum = c00G + c10G + c01G + c11G;
+            unsigned int bSum = c00B + c10B + c01B + c11B;
+            unsigned int aSum = c00A + c10A + c01A + c11A;
+
+            dstData[(y * dstWidth + x) * 4 + 0] = (unsigned char)(rSum / 4);
+            dstData[(y * dstWidth + x) * 4 + 1] = (unsigned char)(gSum / 4);
+            dstData[(y * dstWidth + x) * 4 + 2] = (unsigned char)(bSum / 4);
+            dstData[(y * dstWidth + x) * 4 + 3] = (unsigned char)(aSum / 4);
+        }
+    }
+
+    return dstData;
+}
+
 void Renderer::SetBlurConstantsBlurDown(BlurConstants &blurConstants)
 {
 	blurConstants.LerpT = 1.f;
@@ -1278,6 +1576,19 @@ void Renderer::CreateBlendStates()
 	{
 		ERROR_AND_DIE("Create blend state for BlendMode::ADDITIVE failed.");
 	}
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[(int)BlendMode::WATER]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Create blend state for BlendMode::WATER failed.");
+	}
 	SetBlendMode(m_desiredBlendMode);
 }
 
@@ -1313,7 +1624,36 @@ void Renderer::CreateSamplerStates()
 		ERROR_AND_DIE("CreateSamplerStates for SamplerMode::BILINEAR_WRAP failed.");
 	}
 
-	SetSamplerMode(m_desiredSamplerMode);
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.f;
+	samplerDesc.MinLOD = 0.f;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[(int)SamplerMode::MIP_MAPPING]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateSamplerStates for SamplerMode::MIP_MAPPING failed.");
+	}
+
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;  // Use point filtering
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[(int)SamplerMode::MIP_MAPPING_POINT]);
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateSamplerStates for SamplerMode::MIP_MAPPING_POINT failed.");
+    }
+
+	SetSamplerMode(m_desiredSamplerMode1);
+
 }
 
 void Renderer::CreateDepthStencilTextureAndView()
@@ -1376,6 +1716,18 @@ void Renderer::BindTexture(Texture const* texture, unsigned int slot)
 	}
 }
 
+void Renderer::BindTextureArray(TextureArray const* textureArray, unsigned int slot /*= 0*/)
+{
+    if (textureArray)
+    {
+        m_deviceContext->PSSetShaderResources(slot, 1, &textureArray->m_shaderResourceView);
+    }
+    else
+    {
+        m_deviceContext->PSSetShaderResources(slot, 1, &m_defaultTexture->m_shaderResourceView);
+    }
+}
+
 void Renderer::CreateBloomShaders(char const* blurDownFilename, char const* blurUpFilename, char const* compositeFilename)
 {
 	m_blurUpShader = CreateOrGetShaderFromFile(blurUpFilename, VertexType::Vertex_PCU);
@@ -1412,9 +1764,19 @@ void Renderer::SetBlendMode(BlendMode blendMode)
 
 }
 
-void Renderer::SetSamplerMode(SamplerMode sampleMode)
+void Renderer::SetSamplerMode(SamplerMode sampleMode1, SamplerMode sampleMode2)
 {
-	m_desiredSamplerMode = sampleMode;
+	if (sampleMode2 == SamplerMode::COUNT)
+	{
+		m_desiredSamplerMode1 = sampleMode1;
+		m_isDoubleSampler = false;
+	}
+	else
+	{
+		m_desiredSamplerMode1 = sampleMode1;
+		m_desiredSamplerMode2 = sampleMode2;
+		m_isDoubleSampler = true;
+	}
 }
 
 void Renderer::SetRasterizerMode(RasterizerMode rasterizerMode)

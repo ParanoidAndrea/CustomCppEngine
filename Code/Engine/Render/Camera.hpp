@@ -40,6 +40,8 @@ public:
 	Mat44 GetRenderMatrix() const;
 	EulerAngles GetCameraOrientation() const;
 	Vec3 GetCameraPosition() const;
+	float GetCameraFOV() const;
+	Vec3 const GetPerspectiveWorldPos(Vec2 const& screenPos) const;
 private:
 	Mode m_mode = eMode_Orthographic;
 	Vec2 m_orthographicBottomLeft;

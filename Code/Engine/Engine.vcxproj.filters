@@ -247,6 +247,15 @@
     <ClCompile Include="UI\ImGuiUtils.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="Core\NetSystem.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Textbox.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\TextureArray.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -497,6 +506,15 @@
     </ClInclude>
     <ClInclude Include="UI\ImGuiUtils.hpp">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\NetSystem.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Textbox.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TextureArray.hpp">
+      <Filter>Render</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

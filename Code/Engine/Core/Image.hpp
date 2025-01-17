@@ -13,9 +13,10 @@ public:
 	std::string const& GetImageFilePath() const;
 	IntVec2		GetDimensions() const;
 	const void* GetRawData() const;
+	 unsigned char const* GetRawCharData() const;
 	Rgba8		GetTexelColor(IntVec2 const& texelCoords) const;
 	void		SetTexelColor(IntVec2 const& texelCoords, Rgba8 const& newColor);
-	
+	Image* CreatePaddedImage(int padding) const;
 private:
 	std::string			m_imageFilePath;
 	IntVec2			m_dimensions = IntVec2(0, 0);

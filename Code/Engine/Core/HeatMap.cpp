@@ -26,7 +26,7 @@ float TileHeatMap::GetHighestHeat()
 	return highestHeat;
 }
 
-void TileHeatMap::AddVertsForDebugDraw(std::vector<Vertex_PCU>& verts, AABB2 bounds, FloatRange valueRange, Rgba8 lowColor, Rgba8 highColor, float specialValue, Rgba8 specialColor)
+void TileHeatMap::AddVertsForDebugDraw(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, FloatRange const& valueRange, Rgba8 const& lowColor, Rgba8 const& highColor, float specialValue, Rgba8 const& specialColor)
 {
 	UNUSED(bounds);
 	for (int y = 0; y < m_dimensions.y; y++)
@@ -60,19 +60,24 @@ void TileHeatMap::SetAllVallues(float value)
 	}
 }
 
-float TileHeatMap::GetValueToTileCoords(IntVec2 tileCoords) const
+float TileHeatMap::GetValueToTileCoords(IntVec2 const& tileCoords) const
 {
 	int tileIndex = tileCoords.x + tileCoords.y * m_dimensions.x;
 	return m_values[tileIndex];
 }
 
-void TileHeatMap::SetValueToTileCoords(IntVec2 tileCoords, float value)
+float TileHeatMap::GetValueToTileIndex(int tileIndex) const
+{
+	return m_values[tileIndex];
+}
+
+void TileHeatMap::SetValueToTileCoords(IntVec2 const& tileCoords, float value)
 {
 	int tileIndex = tileCoords.x + tileCoords.y * m_dimensions.x;
 	m_values[tileIndex] = value;
 }
 
-void TileHeatMap::AddValueToTileCoords(IntVec2 tileCoords, float value)
+void TileHeatMap::AddValueToTileCoords(IntVec2 const& tileCoords, float value)
 {
 	int tileIndex = tileCoords.x + tileCoords.y * m_dimensions.x;
 	if (m_values[tileIndex])

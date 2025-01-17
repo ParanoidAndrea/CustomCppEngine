@@ -3,6 +3,7 @@
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
 class Renderer;
 class Camera;
 enum class DebugRenderMode
@@ -37,6 +38,7 @@ void DebugAddWorldPoint(Vec3 const& position, float radius, float duration, Rgba
 void DebugAddWorldLine(Vec3 const& startPos, Vec3 const& endPos,float radius, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddWorldWireCylinder(Vec3 const& basePos, Vec3 const& topPos, float radius, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddWorldWiredSphere(Vec3 const& centerPos, float radius, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
+void DebugAddWorldWiredAABB3(AABB3 const& box, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddWorldArrow(Vec3 const& startPos, Vec3 const& endPos, float radius, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddWorldText(std::string const& text, Mat44 const& transform, float textHeight, Vec2 const& alignment = Vec2(.5f,.5f), float duration = -1.f, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddWorldBasis(Mat44 const& transform, float duration, DebugRenderMode mode = DebugRenderMode::USE_DEPTH, float scale = 1.f);

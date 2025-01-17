@@ -132,4 +132,12 @@ void AABB2::StretchToIncludePoint(Vec2 const& point)
 		m_maxs.y=point.y;
 }
 
+void AABB2::GetEdgePoints(Vec2 outPoints[4]) const
+{
+    outPoints[0] = m_mins;
+    outPoints[1] = Vec2(m_maxs.x, m_mins.y);
+    outPoints[2] = m_maxs;
+    outPoints[3] = Vec2(m_mins.x, m_maxs.y);
+}
+
 

@@ -13,7 +13,9 @@ Strings SplitStringOnDelimiter(std::string const& originalString, std::string co
 
 const std::string Stringf( char const* format, ... );
 const std::string Stringf( int maxLength, char const* format, ... );
-std::string AllLowerCase(std::string stringToLowerCase);
+std::string AllLowerCase(std::string const& stringToLowerCase);
+void TrimString(std::string& originalString, char delimiterToTrim);
+Strings SplitStringWithQuotes(std::string const& originalString, char delimiterToSplitOn, bool IsKeepQuote = false);
 bool IsEqualWithoutProperCase(std::string string1,std::string string2);
 void PrintTextToDebug(std::string const& message);
 void PrintLineToDebug(std::string const& message);

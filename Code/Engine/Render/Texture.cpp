@@ -21,3 +21,36 @@ Texture::~Texture()
 
 }
 
+bool Texture::IsNormalTextureCompatible(Texture const* normalTexture) const
+{
+	// Check if normalTexture is not null
+	if (normalTexture == nullptr)
+	{
+		return false;
+	}
+
+	// Compare dimensions
+	if (m_dimensions != normalTexture->GetDimensions())
+	{
+		return false;
+	}
+
+	// Compare formats
+	D3D11_TEXTURE2D_DESC desc;
+	D3D11_TEXTURE2D_DESC normalDesc;
+
+	m_texture->GetDesc(&desc);
+	normalTexture->m_texture->GetDesc(&normalDesc);
+
+	if (desc.Format != normalDesc.Format)
+	{
+		return false;
+	}
+	return true;
+}
+
+ID3D11Texture2D const* Texture::GetTexture() const
+{
+	return m_texture;
+}
+

@@ -4,7 +4,7 @@
 #define WIN32_LEARN_AND_MEAN
 #include <windows.h>
 #include "Engine/Math/Vec2.hpp"
-
+#include "Engine/Math/AABB2.hpp"
 
 class InputSystem;
 
@@ -14,7 +14,8 @@ struct WindowConfig
 	std::string  m_windowTitle = "Untitled App";
 	float m_aspectRatio = 2.f;
 	bool m_isFullscreen = false;
-	Vec2 m_screenSize = Vec2(1600.f, 800.f);
+	IntVec2 m_screenSize = IntVec2(-1, -1);
+	IntVec2 m_screenPos = IntVec2(-1, -1);
 };
 
 class Window
@@ -36,9 +37,11 @@ public:
 	HWND GetWindowHandle() const;
 	IntVec2 GetClientDimensions() const;
 	Vec2 const GetMouseScreenPos() const;
-
+	Vec2 const GetScreenSize() const;
+	AABB2 const GetScreenBound() const;
 	std::string const& OpenFileDialogAndGetFilename() const;
 	void ShowWindowLastError();
+	float GetAspectRatio() const;
 protected:
 	void CreateOSWindow();
 	void RunMessagePump();

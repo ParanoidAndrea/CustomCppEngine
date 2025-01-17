@@ -8,7 +8,7 @@ EulerAngles::EulerAngles(float yawDegrees, float pitchDegrees, float rollDegrees
 {
 
 }
-void EulerAngles::GetAsVectors_IFwd_JLeft_KUp(Vec3& out_forwardIBasis, Vec3& out_leftJBasis, Vec3& out_upwardKBasis)
+void EulerAngles::GetAsVectors_IFwd_JLeft_KUp(Vec3& out_forwardIBasis, Vec3& out_leftJBasis, Vec3& out_upwardKBasis) const
 {
 	Mat44 eulerAsMatrix = GetAsMatrix_IFwd_JLeft_KUp();
 	out_forwardIBasis = eulerAsMatrix.GetIBasis3D();
@@ -80,6 +80,11 @@ bool EulerAngles::SetFromText(const char* text)
 	
 }
 
+bool EulerAngles::operator==(EulerAngles const& anglesToCompare) const
+{
+	return ((m_yawDegrees == anglesToCompare.m_yawDegrees) && (m_pitchDegrees == anglesToCompare.m_pitchDegrees) && (m_rollDegrees == anglesToCompare.m_rollDegrees));
+}
+
 void EulerAngles::operator+=(EulerAngles const& anglesToAdd) 
 {
 	m_yawDegrees += anglesToAdd.m_yawDegrees;
@@ -92,6 +97,20 @@ void EulerAngles::operator-=(EulerAngles const& anglesToAdd)
 	m_yawDegrees -= anglesToAdd.m_yawDegrees;
 	m_pitchDegrees -= anglesToAdd.m_pitchDegrees;
 	m_rollDegrees -= anglesToAdd.m_rollDegrees;
+}
+
+EulerAngles const EulerAngles::operator-(EulerAngles const& anglesToSubtract) const
+{
+	return EulerAngles(m_yawDegrees - anglesToSubtract.m_yawDegrees, m_pitchDegrees - anglesToSubtract.m_pitchDegrees, m_rollDegrees - anglesToSubtract.m_rollDegrees);
+}
+
+EulerAngles const EulerAngles::RotateTowardsOrientation(EulerAngles const& targetOrientation, float maxRotation)
+{
+	//EulerAngles deltaDegrees = targetOrientation - *this;
+	return EulerAngles(GetTurnedTowardDegrees(m_yawDegrees, targetOrientation.m_yawDegrees, maxRotation),
+		GetTurnedTowardDegrees(m_pitchDegrees, targetOrientation.m_pitchDegrees, maxRotation),
+		GetTurnedTowardDegrees(m_rollDegrees, targetOrientation.m_rollDegrees, maxRotation));
+
 }
 
 EulerAngles const EulerAngles::operator*(float uniformScale) const

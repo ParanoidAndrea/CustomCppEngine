@@ -100,14 +100,16 @@ bool IntVec2::operator<(const IntVec2& compareForm) const
 	}
 }
 
-bool IntVec2::operator==(IntVec2 const& compareFrom) const
-{
-	if (x == compareFrom.x && y == compareFrom.y)
-		return true;
-	return false;
-}
+
 
 bool IntVec2::operator!=(IntVec2 const& compareFrom)
+{
+	if (x == compareFrom.x && y == compareFrom.y)
+		return false;
+	return true;
+}
+
+bool IntVec2::operator!=(IntVec2 const& compareFrom) const
 {
 	if (x == compareFrom.x && y == compareFrom.y)
 		return false;
@@ -125,7 +127,12 @@ bool IntVec2::operator==(IntVec2 const& compareFrom)
 		return true;
 	return false;
 }
-
+bool IntVec2::operator==(IntVec2 const& compareFrom) const
+{
+	if (x == compareFrom.x && y == compareFrom.y)
+		return true;
+	return false;
+}
  IntVec2 IntVec2::operator +(IntVec2 const& vecToAdd) const
 {
 	return IntVec2(x + vecToAdd.x, y + vecToAdd.y);

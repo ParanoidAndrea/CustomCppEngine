@@ -1,4 +1,3 @@
-
 #include "Engine/UI/ImGuiUtils.hpp"
 #include "ThirdParty/ImGui/imgui.h"
 #include "ThirdParty/ImGui/imgui_impl_win32.h"
@@ -53,9 +52,9 @@ void GuiSystem::ShowGuiWindows()
 	}
 	else
 	{
-		for (GuiWindow* window: m_windows)
+		for (size_t i = 0; i < m_windows.size(); ++i)
 		{
-			window->ShowWindow();
+			m_windows[i]->ShowWindow();
 		}
 	}
 }
@@ -79,6 +78,8 @@ void GuiWindow::ShowWindow()
 }
 
 GuiSystem* g_guiSystem = nullptr;
+
+
 void ImGuiStartup(Renderer* renderer, HWND windowHandler)
 {
 	// Setup Dear ImGui context
@@ -86,6 +87,7 @@ void ImGuiStartup(Renderer* renderer, HWND windowHandler)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
@@ -93,7 +95,6 @@ void ImGuiStartup(Renderer* renderer, HWND windowHandler)
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(windowHandler);
 	ImGui_ImplDX11_Init(renderer->GetDevice(), renderer->GetDeviceContext());
-	
 }
 
 void ImGuiBeginFrame()
@@ -105,10 +106,6 @@ void ImGuiBeginFrame()
 	ImGui::NewFrame();
 	g_guiSystem -> m_currentViewportSize = Vec2(ImGui::GetMainViewport()->WorkSize.x, ImGui::GetMainViewport()->WorkSize.y); 
 	g_guiSystem->ShowGuiWindows();
-	if (g_theInput->WasKeyJustPressed('P'))
-	{
-		ToggleGuiWindowFocus();
-	}
 	
 	//ImGui::ShowDemoWindow(); // Show demo window! :)
 }
@@ -116,9 +113,13 @@ void ImGuiBeginFrame()
 void ImGuiEndFrame()
 {
 	// Rendering
-// (Your code clears your framebuffer, renders your other stuff etc.)
+	// (Your code clears your framebuffer, renders your other stuff etc.)
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	if (g_theInput->WasKeyJustPressed(' '))
+	{
+		ToggleGuiWindowFocus();
+	}
 	// (Your code calls swapchain's Present() function)
 }
 
@@ -139,19 +140,58 @@ void SetImGuiWindowPosAndSize(Vec2 const& normalizedPos, Vec2 const& alignment, 
 	else
 	{
 		windowSize = size;
-		ImGui::SetWindowSize(ImVec2(size.x, size.y));
+		ImGui::SetWindowSize(ImVec2(size.x, size.y), ImGuiCond_FirstUseEver);
 	}
 	Vec2 windowPos;
 	windowPos.x = g_guiSystem->m_currentViewportSize.x * normalizedPos.x - alignment.x * windowSize.x;
 	windowPos.y = g_guiSystem->m_currentViewportSize.y * normalizedPos.y - alignment.y * windowSize.y;
 
-	ImGui::SetWindowPos(ImVec2(windowPos.x, windowPos.y));
+	ImGui::SetWindowPos(ImVec2(windowPos.x, windowPos.y), ImGuiCond_FirstUseEver);
 
+}
+
+void SetImGuiNextWindowPosAndSize(Vec2 const& normalizedPos, Vec2 const& alignment, Vec2 const& size)
+{
+	Vec2 windowSize;
+	if (size == Vec2(-1.f, -1.f))
+	{
+		windowSize = Vec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
+	}
+	else
+	{
+		windowSize = size;
+		ImGui::SetNextWindowSize(ImVec2(size.x, size.y), ImGuiCond_FirstUseEver);
+	}
+	Vec2 windowPos;
+	windowPos.x = g_guiSystem->m_currentViewportSize.x * normalizedPos.x - alignment.x * windowSize.x;
+	windowPos.y = g_guiSystem->m_currentViewportSize.y * normalizedPos.y - alignment.y * windowSize.y;
+
+	ImGui::SetNextWindowPos(ImVec2(windowPos.x, windowPos.y), ImGuiCond_FirstUseEver);
+}
+
+Vec2 const GetImGuiWindowNormalizePosFromSize(Vec2 const& alignment, Vec2 const& size)
+{
+	Vec2 windowPos = Vec2(ImGui::GetWindowPos().x,ImGui::GetWindowPos().y);
+	Vec2 windowSize = (size == Vec2(-1.f, -1.f)) ?Vec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y) : size;
+	return Vec2((alignment.x * windowSize.x + windowPos.x) / g_guiSystem->m_currentViewportSize.x,
+		(alignment.y * windowSize.y + windowPos.y) / g_guiSystem->m_currentViewportSize.y);
 }
 
 void AddGuiWindow(GuiWindow* window)
 {
 	g_guiSystem->AddGuiWindow(window);
+}
+
+void AddGuiPopup(std::string const& popupTitle, std::string const& popupText, Vec2 size)
+{
+	g_guiSystem->m_windows.push_back(new GuiPopup(popupTitle, popupText, size)) ;
+}
+
+void AddGuiPopup(std::string const& popupTitle, std::string const& popupText, std::function<void()> yesCallback, std::function<void()> noCallback, Vec2 size)
+{
+	GuiPopup* popup = new GuiPopup(popupTitle, popupText, size, POPUPTYPE_CALLBACK);
+	popup->SetYesCallback(yesCallback);
+	popup->SetNoCallback(noCallback);
 }
 
 bool IsGuiWindowFocus()
@@ -186,6 +226,56 @@ void SetToggleWindowKey(char keyCode)
 			ImGui::SetWindowCollapsed(true);
 			SetGuiWindowFocus(false);
 		}
+	}
+}
+
+void GuiPopup::ShowWindow()
+{
+	ImGui::OpenPopup(m_popupTitle.c_str());
+	SetImGuiNextWindowPosAndSize(Vec2(0.5f,0.5f),Vec2(0.5f,0.5f),m_size);
+	// Create the popup window
+	if (ImGui::BeginPopupModal(m_popupTitle.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// Draw the popup contents
+		ImGui::SetWindowFontScale(1.25f);
+		ImGui::Spacing();
+		ImGui::TextWrapped(m_popupText.c_str());
+		ImGui::Spacing();
+		ImGui::SetWindowFontScale(1.f);
+		// Add a button to close the popup
+		if (m_type == POPUPTYPE_NORMAL)
+		{
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+				g_guiSystem->m_windows.erase(std::remove(g_guiSystem->m_windows.begin(), g_guiSystem->m_windows.end(), this));
+				delete this;
+			}
+		}
+		else
+		{
+			bool isOpen = false;
+			if (ImGui::Button("Yes"))
+			{
+				if (m_yesCallback) m_yesCallback();
+				ImGui::CloseCurrentPopup();
+				isOpen = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No"))
+			{
+				if (m_noCallback) m_noCallback();
+				ImGui::CloseCurrentPopup();
+				isOpen = true;
+			}
+			if (isOpen)
+			{
+				delete this;
+			}
+		}
+
+		// End the popup window definition
+		ImGui::EndPopup();
 	}
 }
 

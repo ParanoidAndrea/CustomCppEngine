@@ -30,6 +30,7 @@ public:
 	bool operator== (IntVec2 const& compareFrom);
 	bool operator== (IntVec2 const& compareFrom) const;
 	bool operator!= (IntVec2 const& compareFrom);
+	bool operator!= (IntVec2 const& compareFrom) const;
 	 IntVec2 operator+ (IntVec2 const& vecToAdd)const;
 	 IntVec2 operator- (IntVec2 const& vecToMinus)const;
 };

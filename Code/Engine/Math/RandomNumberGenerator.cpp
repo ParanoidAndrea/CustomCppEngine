@@ -51,6 +51,12 @@ Vec2 RandomNumberGenerator::RollRandomVector2DInBox(AABB2 const& box)
 	return result;
 }
 
+Rgba8 RandomNumberGenerator::RollRandomColor(Rgba8 const& color1, Rgba8 const& color2)
+{
+	float weight = RollRandomFloatZeroToOne();
+    return InterpolateFromNewColor(color1, color2, weight);
+}
+
 bool RandomNumberGenerator::RollRandomBool()
 {
 	int number = RollRandomIntInRange(0, 1);

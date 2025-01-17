@@ -105,15 +105,15 @@ Vec2 const Vec2::GetNormalized() const
 
 Vec2 const Vec2::GetReflected(Vec2 const& impactSurfaceNormal) const
 {
-	Vec2 projectVector = impactSurfaceNormal * DotProduct2D(Vec2(x, y), impactSurfaceNormal);
-	Vec2 reflectionVector = Vec2(x,y) - projectVector;
+	Vec2 projectVector = impactSurfaceNormal * DotProduct2D(*this, impactSurfaceNormal);
+	Vec2 reflectionVector = *this - projectVector;
 	return reflectionVector - projectVector;
 }
 
 void Vec2::Reflect(Vec2 const& impactSurfaceNormal)
 {
-	Vec2 projectVector = impactSurfaceNormal * DotProduct2D(Vec2(x, y), impactSurfaceNormal);
-	Vec2 reflectionVector = Vec2(x, y) - projectVector - projectVector;
+	Vec2 projectVector = impactSurfaceNormal * DotProduct2D(*this, impactSurfaceNormal);
+	Vec2 reflectionVector = *this - projectVector - projectVector;
 	x = reflectionVector.x;
 	y = reflectionVector.y;
 }

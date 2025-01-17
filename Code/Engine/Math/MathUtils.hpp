@@ -48,6 +48,7 @@ float ConvertDegreesToRadians(float degrees);
 float ConvertRadiansToDegrees(float radians);
 float CosDegrees(float degrees);
 float SinDegrees(float degrees);
+float TanDegrees(float degrees);
 float AcosDegrees(float degrees);
 float AsinDegrees(float degrees);
 float AtanDegrees(float degrees);
@@ -83,6 +84,8 @@ bool IsPointInsideCapsule2D(Vec2 const& point, Vec2 const& boneStart, Vec2 const
 bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& orientedBox);
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius);
 bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees, float sectorRadius);
+bool IsPointInsideHexgon2D(Vec2 const& point, Vec2 const& hexgonCenter, float hexgonInradius);
+bool IsPointInsideHexgonXY3D(Vec3 const& point, Vec2 const& hexgonCenter, float hexgonInradius);
 bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& box);
 bool IsPointInsideZCylinder3D(Vec3 const& point, Vec2 const& cylinderCenterXY, FloatRange cylinderMinMaxZ, float cylinderRadius);
@@ -111,6 +114,7 @@ Vec3 const GetNearestPointOnSphere(Vec3 const& referencePos, Vec3 const& sphereC
 Vec3 const GetNearestPointOnZCylinder(Vec3 const& referencePos, Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ);
 Vec3 const GetNearestPointOnOBB3D(Vec3 const& referencePos, OBB3 const& orientedBox);
 
+Vec3 const GetDisplacementToAABB3D(Vec3 const& point, AABB3 const& box);
 bool PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool PushDiscOutOfFixedDisc2D(Vec2& mobileDiscCenter, float mobileDiscRaius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRaius, Vec2& bCenter, float bRaius);

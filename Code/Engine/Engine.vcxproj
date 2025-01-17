@@ -336,6 +336,7 @@
     <ClCompile Include="Core\Image.cpp" />
     <ClCompile Include="Core\JobSystem.cpp" />
     <ClCompile Include="Core\NamedStrings.cpp" />
+    <ClCompile Include="Core\NetSystem.cpp" />
     <ClCompile Include="Core\Rgba8.cpp" />
     <ClCompile Include="Core\SimpleTriangleFont.cpp" />
     <ClCompile Include="Core\StringUtils.cpp" />
@@ -380,10 +381,12 @@
     <ClCompile Include="Render\SpriteAnimDefinition.cpp" />
     <ClCompile Include="Render\SpriteSheet.cpp" />
     <ClCompile Include="Render\Texture.cpp" />
+    <ClCompile Include="Render\TextureArray.cpp" />
     <ClCompile Include="Render\VertexBuffer.cpp" />
     <ClCompile Include="UI\Button.cpp" />
     <ClCompile Include="UI\ImGuiUtils.cpp" />
     <ClCompile Include="UI\Slider.cpp" />
+    <ClCompile Include="UI\Textbox.cpp" />
     <ClCompile Include="UI\Widget.cpp" />
     <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
@@ -419,6 +422,7 @@
     <ClInclude Include="Core\Image.hpp" />
     <ClInclude Include="Core\JobSystem.hpp" />
     <ClInclude Include="Core\NamedStrings.hpp" />
+    <ClInclude Include="Core\NetSystem.hpp" />
     <ClInclude Include="Core\Rgba8.hpp" />
     <ClInclude Include="Core\SimpleTriangleFont.hpp" />
     <ClInclude Include="Core\StringUtils.hpp" />
@@ -465,10 +469,12 @@
     <ClInclude Include="Render\SpriteAnimDefinition.hpp" />
     <ClInclude Include="Render\SpriteSheet.hpp" />
     <ClInclude Include="Render\Texture.hpp" />
+    <ClInclude Include="Render\TextureArray.hpp" />
     <ClInclude Include="Render\VertexBuffer.hpp" />
     <ClInclude Include="UI\Button.hpp" />
     <ClInclude Include="UI\ImGuiUtils.hpp" />
     <ClInclude Include="UI\Slider.hpp" />
+    <ClInclude Include="UI\Textbox.hpp" />
     <ClInclude Include="UI\Widget.hpp" />
     <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>

@@ -74,7 +74,24 @@ void EventSystem::FireEvent(std::string const& eventName, EventArgs& args)
 			
 			if (subscriber(args))
 			{
-				break;
+				return;
+			}
+		}
+	}
+
+	found = m_subscriptionListByName.find(AllLowerCase(eventName));
+	if (found != m_subscriptionListByName.end())
+	{
+		SubscriptionList const& subscriberForThisEventName = found->second;
+
+		for (int i = 0; i < (int)subscriberForThisEventName.size(); ++i)
+		{
+
+			EventCallbackFunction subscriber = subscriberForThisEventName[i];
+
+			if (subscriber(args))
+			{
+				return;
 			}
 		}
 	}
@@ -94,14 +111,32 @@ void EventSystem::FireEvent(std::string const& eventName)
 		{
 		
 			EventCallbackFunction subscriber = subscriberForThisEventName[i];
-		
-			subscriber(args);
+			if (subscriber(args))
+			{
+				return;
+			}
+		}
+	}
+	found = m_subscriptionListByName.find(AllLowerCase(eventName));
+	if (found != m_subscriptionListByName.end())
+	{
+		SubscriptionList const& subscriberForThisEventName = found->second;
+
+		for (int i = 0; i < (int)subscriberForThisEventName.size(); ++i)
+		{
+
+			EventCallbackFunction subscriber = subscriberForThisEventName[i];
+
+			if (subscriber(args))
+			{
+				return;
+			}
 		}
 	}
 	//m_eventSystemMutex.unlock();
 }
 
-std::vector < std::string > EventSystem::GetAllRegisteredCommands()
+std::vector <std::string> EventSystem::GetAllRegisteredCommands()
 {
 	return m_registeredCommands;
 }
