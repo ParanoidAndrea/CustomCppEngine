@@ -6,6 +6,7 @@
 #include "Engine/Math/OBB3.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/Convex.hpp"
 #include <vector>
 enum CubePoints
 {
@@ -25,11 +26,13 @@ void AddVertsForCapsule2D(std::vector<Vertex_PCU>& verts, Vec2 const& boneStart,
 void AddVertsForDisc2D(std::vector<Vertex_PCU>& verts, Vec2 const& center, float radius, Rgba8 const& color);
 void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float zOrder = 0.f);
 void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, Vec2 const& uvMins, Vec2 const& uvMaxs);
+void AddVertsForLineAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float thickness);
 void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, OBB2 const& box, Rgba8 const& color);
 void AddVertsForLineSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start, Vec2 const& end, float thickness, Rgba8 const& color, bool isDrawingInside = false);
 void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 const& start, Vec2 const& end, float thickness, float arrowRadius, Rgba8 const& color);
 void AddVertsForSemiDisc2D(std::vector<Vertex_PCU>& verts, Vec2 const& center, float radius, Rgba8 const& color, float orientationDegrees);
 void AddVertsForLaser2D(std::vector<Vertex_PCU>& verts, Vec2 const& start, Vec2 const& end, float thickness, Rgba8 const& startColor, Rgba8 const& endColor);
+void AddVertsForPlane2D(std::vector<Vertex_PCU>& verts, Rgba8 const& planeColor, float thickness, AABB2 const& screenArea, Plane2 const& plane);
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2(Vec2(), Vec2(1.f,1.f)));
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color = Rgba8::WHITE, Vec2 const& uvBottomLeft = Vec2(0.f, 0.f), Vec2 const& uvBottomRight = Vec2(0.f, 1.f), Vec2 const& uvTopRight = Vec2(1.f, 1.f), Vec2 const& uvTopLeft = Vec2(1.f, 0.f));
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2(Vec2(), Vec2(1.f, 1.f)));
@@ -58,3 +61,6 @@ void AddVertsForArrow3D(std::vector<Vertex_PCU>& verts, Vec3 const& startPos, Ve
 void CalculateTangentSpaceBasisVectors(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, bool computeNormals = true, bool computeTangents = true);
 void AddVertsForHexgonXY3D(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes, Vec2 const& centerPos, float inradius, float thickness, Rgba8 const& color, bool isFilled = false, Rgba8 const& filledColor = Rgba8(0,0,0,255));
 void AddVertsForHexgonXY3D(std::vector<Vertex_PCU>& verts, Vec2 const& centerPos, float inradius, float thickness, Rgba8 const& color, bool isFilled = false, Rgba8 const& filledColor = Rgba8(0,0,0,255), float height = 0.f);
+void AddVertsForConvex2D(std::vector<Vertex_PCU>& verts, ConvexPoly2 const& convexPoly, Rgba8 const& fillColor, bool isDrawingLine = false, Rgba8 const& lineColor = Rgba8(0, 0, 0, 255), float lineThickness = 0.5f);
+void AddVertsForConvexLine2D(std::vector<Vertex_PCU>& verts, ConvexPoly2 const& convexPoly, Rgba8 const lineColor, float lineThickness);
+void AddVertsForConvex2D(std::vector<Vertex_PCU>& verts, ConvexHull2 const& convexHull, Rgba8 const& fillColor, bool isDrawingLine = false, Rgba8 const& lineColor = Rgba8(0, 0, 0, 255), float lineThickness = 0.5f);

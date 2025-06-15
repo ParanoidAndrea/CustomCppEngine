@@ -5,6 +5,8 @@
 #include "Engine/Math/OBB3.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/Plane3.hpp"
+#include "Engine/Math/Plane2.hpp"
+#include "Engine/Math/Convex.hpp"
 struct RaycastResult2D
 {
 	// Basic raycast result information (required)
@@ -34,6 +36,8 @@ struct RaycastResult3D
 RaycastResult2D RaycastVsDisc2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, Vec2 discCenter, float discRadius);
 RaycastResult2D RaycastVsLineSegments2D(Vec2 rayStart, Vec2 fwdNormal, float maxDist, Vec2 lineStart, Vec2 lineEnd);
 RaycastResult2D RaycastVsAABBs2D(Vec2 startPos, Vec2 endPos, float maxDist, AABB2 bound);
+RaycastResult2D RaycastVsPlane2D(Vec2 rayStart, Vec2 rayForwardNormal, float rayLength, Plane2 const& plane);
+RaycastResult2D RaycastVsConvexHull2D(Vec2 rayStart, Vec2 rayForwardNormal, float rayLength, ConvexHull2 const& convex);
 RaycastResult3D RaycastVsAABB3D(Vec3 rayStart, Vec3 rayForwardNormal, float rayLength, AABB3 box);
 RaycastResult3D RaycastVsSphere3D(Vec3 rayStart, Vec3 rayForwardNormal, float rayLength, Vec3 sphereCenter, float sphereRadius);
 RaycastResult3D RaycastVsCylinderZ3D(Vec3 rayStart, Vec3 rayForwardNormal, float rayLength, Vec2 const& centerXY, FloatRange const& minMaxZ, float radius);

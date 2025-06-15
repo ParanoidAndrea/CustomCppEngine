@@ -55,6 +55,7 @@ public:
 	void AddWorldBillboardText(std::string const& text, Vec3 const& origin, float textHeight, Vec2 const& alignment, float duration, Rgba8 const& startColor, Rgba8 const& endColor, DebugRenderMode mode);
 	void AddScreenText(std::string const& text, AABB2 const& textBox, float textHeight, Vec2 const& alignment, float duration, Rgba8 const& startColor, Rgba8 const& endColo, DebugRenderMode mode);
 	void AddMessage(std::string const& text, float duration, Rgba8 const& startColor, Rgba8 const& endColor);
+	void ClearScreenText();
 public:
 	DebugRenderConfig m_config;
 	DebugRenderMode m_mode = DebugRenderMode::USE_DEPTH;
@@ -231,6 +232,7 @@ void DebugRenderSystem::RenderScreen(Camera const& camera)
 		m_config.m_renderer->BeginCamera(camera);
 		m_config.m_renderer->BindTexture(&m_bitMapFont->GetTexture());
 		m_config.m_renderer->SetModelConstants();
+		m_config.m_renderer->SetDepthMode(DepthMode::DISABLED);
 		m_config.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
 		for (int i = 0; i < (int)m_screenMessages.size(); ++i)
 		{
@@ -462,7 +464,7 @@ void DebugRenderSystem::AddWorldBillboardText(std::string const& text, Vec3 cons
 		textGeometery.m_timer = new Timer(duration);
 		textGeometery.m_timer->Start();
 	}
-	m_bitMapFont->AddVertsForTextBox3DArOriginXForward(textGeometery.m_vertexes, textHeight, text, Rgba8::WHITE, 1.f, alignment);
+	m_bitMapFont->AddVertsForTextBox3DArOriginXForward(textGeometery.m_vertexes, textHeight, text, Rgba8::WHITE, m_config.m_fontAspect, alignment);
 	//Mat44 localMatrix = EulerAngles(90.f, 0.f, 90.f).GetAsMatrix_IFwd_JLeft_KUp();
 
 	//TransformVertexArray3D(textGeometery.m_vertexes, localMatrix);
@@ -477,7 +479,7 @@ void DebugRenderSystem::AddScreenText(std::string const& text, AABB2 const& text
 	UNUSED(mode);
 	Rgba8 color = InterpolateFromNewColor(startColor, endColor, 1.f);	
 	m_debugRenderMutex.lock();
-	m_bitMapFont->AddVertsForTextBox2D(m_screenTextVerts, textBox, textHeight, text, color, 1.f, alignment);
+	m_bitMapFont->AddVertsForTextBox2D(m_screenTextVerts, textBox, textHeight, text, color, m_config.m_fontAspect, alignment);
 	m_debugRenderMutex.unlock();
 }
 
@@ -497,9 +499,16 @@ void DebugRenderSystem::AddMessage(std::string const& text, float duration, Rgba
 	}
 
 	AABB2 textBounds = AABB2(0.f,800.f - 15.f * ((int)m_screenMessages.size()+2), 400.f, 800.f - 15.f * (int)m_screenMessages.size()+1 );
-	m_bitMapFont->AddVertsForTextBox2D(message.m_vertexes, textBounds, 15.f, text, startColor, 1.f,Vec2());
+	m_bitMapFont->AddVertsForTextBox2D(message.m_vertexes, textBounds, 15.f, text, startColor, m_config.m_fontAspect,Vec2());
 	m_debugRenderMutex.lock();
 	m_screenMessages.push_back(message);
+	m_debugRenderMutex.unlock();
+}
+
+void DebugRenderSystem::ClearScreenText()
+{
+	m_debugRenderMutex.lock();
+	m_screenTextVerts.clear();
 	m_debugRenderMutex.unlock();
 }
 
@@ -622,4 +631,9 @@ void DebugAddScreenText(std::string const& text, AABB2 const& textBox, float tex
 void DebugAddMessage(std::string const& text, float duration, Rgba8 const& startColor, Rgba8 const& endColor)
 {
 	g_debugRenderSystem->AddMessage(text, duration, startColor, endColor);
+}
+
+void DebugClearScreenText()
+{
+	g_debugRenderSystem->ClearScreenText();
 }

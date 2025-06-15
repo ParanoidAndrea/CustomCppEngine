@@ -132,19 +132,19 @@ void NetSystem::BeginFrame()
 			ProcessData();
 
 		}
-// 		switch (m_serverState)
-// 		{
-// 		case ServerState::NOT_LISTENING:
-// 			PrintLineToDebug("Server state: Not Listening");
-// 			break;
-// 		case ServerState::LISTENING:
-// 			PrintLineToDebug("Server state: Listening");
-// 			break;
-// 		case ServerState::CLIENT_CONNECTED:
-// 			PrintLineToDebug("Server state: Client Connected");
-// 			break;
-// 
-// 		}
+ 		switch (m_serverState)
+ 		{
+ 		case ServerState::NOT_LISTENING:
+ 			PrintLineToDebug("Server state: Not Listening");
+ 			break;
+ 		case ServerState::LISTENING:
+ 			PrintLineToDebug("Server state: Listening");
+ 			break;
+ 		case ServerState::CLIENT_CONNECTED:
+ 			PrintLineToDebug("Server state: Client Connected");
+ 			break;
+ 
+ 		}
 		
 	}
 	else if (IsClient())
@@ -307,6 +307,27 @@ void NetSystem::Send(std::string const& data)
 		m_sendQueue.push_back(c);
 	}
 	
+	m_sendQueue.push_back('\0');
+}
+
+void NetSystem::Send(std::string const& data, EventArgs& args)
+{
+	for (char c: data)
+	{
+		m_sendQueue.push_back(c);
+	}
+	
+	auto properties = args.GetProperties();
+	for (auto property : properties)
+	{
+		m_sendQueue.push_back(' ');
+		std::string propertyString = property.first.GetOriginalString()+'='+ property.second->GetAsString();
+		for (char c: propertyString)
+		{
+			m_sendQueue.push_back(c);
+		}
+	}
+
 	m_sendQueue.push_back('\0');
 }
 

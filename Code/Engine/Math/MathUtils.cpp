@@ -1,5 +1,6 @@
 #include "MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include <algorithm>
 Mat44 GetBillboardMatrix(BillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 const& billboardScale)
 {
 	Vec3 iBasis, jBasis, kBasis;
@@ -454,6 +455,18 @@ bool IsPointInsideHexgon2D(Vec2 const& point, Vec2 const& hexgonCenter, float he
 	if (CrossProduct2D(edge, t) < 0)
 	{
 		return false;
+	}
+	return true;
+}
+
+bool IsPointInsideConvex2D(Vec2 const& point, ConvexHull2 const& convexHull)
+{
+	for (size_t i = 0; i < convexHull.m_boundingPlanes.size(); ++i)
+	{
+		if (convexHull.m_boundingPlanes[i].IsPointInTheFrontSide(point))
+		{
+			return false;
+		}
 	}
 	return true;
 }
@@ -1040,4 +1053,70 @@ float ComputeQuinticBezier1D(float A, float B, float C, float D, float E, float 
 
 	// Final interpolation
 	return Interpolate(Interpolate(r0, r1, t), Interpolate(r1, r2, t), t);
+}
+
+void GetBoundingDiscFromPoints( Vec2 const& a, const Vec2& b, Vec2& center, float& radiusSquared)
+{
+    center = (a + b) * 0.5f;
+    radiusSquared = GetDistanceSquared2D(a, b) * 0.25f;
+}
+
+void GetBoundingDiscFromThreePoints( Vec2 const& a, Vec2 const& b, Vec2 const& c, Vec2& center, float& radiusSquared)
+{
+    float ax = a.x, ay = a.y;
+    float bx = b.x, by = b.y;
+    float cx = c.x, cy = c.y;
+
+    float d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+    if (std::abs(d) < 1e-6f)
+    {
+        GetBoundingDiscFromPoints(a, b, center, radiusSquared);
+        return;
+    }
+
+    float ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d;
+    float uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d;
+
+    center = Vec2(ux, uy); 
+    radiusSquared = GetDistanceSquared2D(center, a);
+}
+
+void SmallestEnclosingCircle(std::vector<Vec2>& points, Vec2& center, float& radiusSquared)
+{
+    std::sort(points.begin(), points.end(),
+        [](const Vec2& a, const Vec2& b) 
+		{
+            return (a.x < b.x) || (a.x == b.x && a.y < b.y);
+        }
+    );
+
+    center = points[0];
+    radiusSquared = 0.f;
+
+    for (size_t i = 1; i < points.size(); ++i)
+    {
+        if (GetDistanceSquared2D(points[i], center) > radiusSquared)
+        {
+            // New point outside the current circle, recompute from scratch with this point
+            center = points[i];
+            radiusSquared = 0.f;
+
+            for (size_t j = 0; j < i; ++j)
+            {
+                if (GetDistanceSquared2D(points[j], center) > radiusSquared)
+                {
+                    // New point extends the circle, compute two-point circle
+                    GetBoundingDiscFromPoints(points[i], points[j], center, radiusSquared);
+                    for (size_t k = 0; k < j; ++k)
+                    {
+                        if (GetDistanceSquared2D(points[k], center) > radiusSquared)
+                        {
+                            // Three points define the new minimum enclosing circle
+                            GetBoundingDiscFromThreePoints(points[i], points[j], points[k], center, radiusSquared);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

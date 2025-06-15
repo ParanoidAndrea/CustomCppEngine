@@ -8,7 +8,15 @@ EventSystem::EventSystem(EventSystemConfig const& config)
 
 EventSystem::~EventSystem()
 {
+    for (auto& pair : m_subscriptionListByName)
+    {
+        for (EventSubscriptionBase* subscription : pair.second)
+        {
+            delete subscription;
+        }
+    }
 }
+
 
 void EventSystem::Startup()
 {
@@ -33,9 +41,10 @@ void EventSystem::SubscribeEventCallbackFunction(std::string const& eventName, E
 // 	if (found == m_subscriptionListByName.end())
 // 	{
 	m_eventSystemMutex.lock();
-		m_registeredCommands.push_back(eventName);
+	m_registeredCommands.push_back(eventName);
 	//}
-	m_subscriptionListByName[eventName].push_back(functionPtr);
+	EventSubscriptionFunction* newFunction = new EventSubscriptionFunction(functionPtr);
+	m_subscriptionListByName[eventName].push_back(newFunction);
 	m_eventSystemMutex.unlock();
 }
 
@@ -48,7 +57,8 @@ void EventSystem::UnsubscribeEventCallbackFunction(std::string const& eventName,
 
 		for (auto it = subscribersForThisEventName.begin(); it != subscribersForThisEventName.end(); ++it)
 		{
-			if (*it == functionPtr)
+			EventSubscriptionFunction* subscribeFuntion = dynamic_cast<EventSubscriptionFunction*>(*it);
+			if (subscribeFuntion == new EventSubscriptionFunction(functionPtr))
 			{  
 				m_eventSystemMutex.lock();
 				subscribersForThisEventName.erase(it);
@@ -70,9 +80,9 @@ void EventSystem::FireEvent(std::string const& eventName, EventArgs& args)
 		for (int i = 0; i < (int)subscriberForThisEventName.size(); ++i)
 		{
 			
-			EventCallbackFunction subscriber = subscriberForThisEventName[i];
+			EventSubscriptionBase* subscriber = subscriberForThisEventName[i];
 			
-			if (subscriber(args))
+			if (subscriber->Fire(args))
 			{
 				return;
 			}
@@ -87,9 +97,9 @@ void EventSystem::FireEvent(std::string const& eventName, EventArgs& args)
 		for (int i = 0; i < (int)subscriberForThisEventName.size(); ++i)
 		{
 
-			EventCallbackFunction subscriber = subscriberForThisEventName[i];
+			EventSubscriptionBase* subscriber = subscriberForThisEventName[i];
 
-			if (subscriber(args))
+			if (subscriber->Fire(args))
 			{
 				return;
 			}
@@ -110,8 +120,8 @@ void EventSystem::FireEvent(std::string const& eventName)
 		for (int i = 0; i < (int)subscriberForThisEventName.size(); ++i)
 		{
 		
-			EventCallbackFunction subscriber = subscriberForThisEventName[i];
-			if (subscriber(args))
+			EventSubscriptionBase* subscriber = subscriberForThisEventName[i];
+			if (subscriber->Fire(args))
 			{
 				return;
 			}
@@ -125,9 +135,9 @@ void EventSystem::FireEvent(std::string const& eventName)
 		for (int i = 0; i < (int)subscriberForThisEventName.size(); ++i)
 		{
 
-			EventCallbackFunction subscriber = subscriberForThisEventName[i];
+			EventSubscriptionBase*  subscriber = subscriberForThisEventName[i];
 
-			if (subscriber(args))
+			if (subscriber->Fire(args))
 			{
 				return;
 			}
@@ -136,7 +146,7 @@ void EventSystem::FireEvent(std::string const& eventName)
 	//m_eventSystemMutex.unlock();
 }
 
-std::vector <std::string> EventSystem::GetAllRegisteredCommands()
+std::vector <std::string> const EventSystem::GetAllRegisteredCommands() const
 {
 	return m_registeredCommands;
 }
@@ -151,6 +161,7 @@ void UnsubscribeEventCallbackFunction(std::string const& eventName, EventCallbac
 	g_theEventSystem->UnsubscribeEventCallbackFunction(eventName, funtionPtr);
 }
 
+
 void FireEvent(std::string const& eventName, EventArgs& args)
 {
 	g_theEventSystem->FireEvent(eventName, args);
@@ -159,4 +170,9 @@ void FireEvent(std::string const& eventName, EventArgs& args)
 void FireEvent(std::string const& eventName)
 {
 	g_theEventSystem->FireEvent(eventName);
+}
+
+EventRecipient::~EventRecipient()
+{
+	g_theEventSystem->UnsubscribeAllEventCallbackObjectMethods(this);
 }

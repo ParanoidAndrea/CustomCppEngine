@@ -47,6 +47,7 @@ protected:
 	void RunMessagePump();
 
 private:
+
 	HDC m_displayContext = nullptr;
 	HWND m_windowHandle = nullptr;
 	IntVec2 m_clientDimensions;

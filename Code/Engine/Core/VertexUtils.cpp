@@ -89,11 +89,26 @@ void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba
 
 	verts.push_back(Vertex_PCU(BL, color, uvMins));
 	verts.push_back(Vertex_PCU(BR, color, Vec2(uvMaxs.x, uvMins.y)));
-	verts.push_back(Vertex_PCU(TL, color, Vec2(uvMins.x, uvMaxs.y)));
+	verts.push_back(Vertex_PCU(TR, color, uvMaxs));
 
-	verts.push_back(Vertex_PCU(BR, color, Vec2(uvMaxs.x, uvMins.y)));
+	verts.push_back(Vertex_PCU(BL, color, uvMins));	
 	verts.push_back(Vertex_PCU(TR, color, uvMaxs));
 	verts.push_back(Vertex_PCU(TL, color, Vec2(uvMins.x, uvMaxs.y)));
+
+
+}
+
+void AddVertsForLineAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float thickness)
+{
+    Vec2 BL = Vec2(bounds.m_mins.x, bounds.m_mins.y);
+    Vec2 BR = Vec2(bounds.m_maxs.x, bounds.m_mins.y);
+    Vec2 TR = Vec2(bounds.m_maxs.x, bounds.m_maxs.y);
+    Vec2 TL = Vec2(bounds.m_mins.x, bounds.m_maxs.y);
+
+	AddVertsForLineSegment2D(verts, BL, BR, thickness, color, true);
+	AddVertsForLineSegment2D(verts, BR, TR, thickness, color, true);
+	AddVertsForLineSegment2D(verts, TR, TL, thickness, color, true);
+	AddVertsForLineSegment2D(verts, TL, BL, thickness, color, true);
 }
 
 void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, OBB2 const& box, Rgba8 const& color)
@@ -207,6 +222,38 @@ void AddVertsForLaser2D(std::vector<Vertex_PCU>& verts, Vec2 const& startPos, Ve
 // 	verts.push_back(Vertex_PCU(Vec3(CPos.x, CPos.y, 0.f), startColor, Vec2(0.f, 0.f)));
 // 	verts.push_back(Vertex_PCU(Vec3(DPos.x, DPos.y, 0.f), startColor, Vec2(0.f, 1.f)));
 	//verts.push_back(Vertex_PCU(Vec3(APos.x, APos.y, 0.f), endColor, Vec2(1.f, 1.f)));
+}
+
+void AddVertsForPlane2D(std::vector<Vertex_PCU>& verts, Rgba8 const& planeColor, float thickness, AABB2 const& screenArea, Plane2 const& plane)
+{
+    // Compute a point on the plane (assuming plane.m_normal is normalized)
+    Vec2 planePoint = plane.m_normal * plane.m_distFromOriginAlongNormal;
+
+    // Compute a tangent vector (90° rotated from the normal)
+    Vec2 tangent = plane.m_normal.GetRotated90Degrees();
+
+    // Determine the screen dimensions and its diagonal length
+    Vec2 screenDims = screenArea.m_maxs - screenArea.m_mins;
+    float diagonal = screenDims.GetLength();
+    float halfLineLength = diagonal;
+
+    // Compute endpoints for the plane visualization (a long line segment)
+    Vec2 p0 = planePoint + tangent * halfLineLength;
+    Vec2 p1 = planePoint - tangent * halfLineLength;
+
+    // Draw the plane line (choose drawing inside mode arbitrarily here as false)
+    bool isDrawingInside = false;
+    AddVertsForLineSegment2D(verts, p0, p1, thickness, planeColor, isDrawingInside);
+
+    // Draw the plane's normal as an arrow inside the screen area.
+    // Use half the diagonal length so that the arrow endpoint lies well within the screen.
+    //float halfDiagonal = diagonal / 2.f;
+    Vec2 normalEndpoint = planePoint + plane.m_normal * 10.f;
+
+    // Draw the arrow: This helper function should create an arrow from planePoint to normalEndpoint.
+    // Parameters: vertices, start point, end point, shaft thickness, head size, and color.
+    AddVertsForArrow2D(verts, planePoint, normalEndpoint, thickness, thickness * 10.f, planeColor);
+
 }
 
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& UVs )
@@ -864,6 +911,37 @@ void AddVertsForHexgonXY3D(std::vector<Vertex_PCU>& verts, Vec2 const& centerPos
 		verts.push_back(Vertex_PCU(innerPos[5], filledColor, Vec2()));
 		verts.push_back(Vertex_PCU(innerPos[0], filledColor, Vec2()));
 	}
+}
+
+void AddVertsForConvex2D(std::vector<Vertex_PCU>& verts, ConvexPoly2 const& convexPoly, Rgba8 const& fillColor, bool isDrawingLine, Rgba8 const& lineColor, float lineThickness)
+{
+	std::vector<Vec2> convexPositions = convexPoly.GetVertexPositions();
+	for (size_t i = 1; i < convexPositions.size() - 1 ; ++i)
+	{
+		verts.push_back(Vertex_PCU(Vec3(convexPositions[0]), fillColor, Vec2()));
+		verts.push_back(Vertex_PCU(Vec3(convexPositions[i]), fillColor, Vec2()));		
+		verts.push_back(Vertex_PCU(Vec3(convexPositions[i+1]), fillColor, Vec2()));
+	}
+	if (isDrawingLine)
+	{
+		AddVertsForConvexLine2D(verts, convexPoly, lineColor, lineThickness);
+	}
+}
+
+void AddVertsForConvex2D(std::vector<Vertex_PCU>& verts, ConvexHull2 const& convexHull, Rgba8 const& fillColor, bool isDrawingLine, Rgba8 const& lineColor, float lineThickness)
+{
+	ConvexPoly2 convexPoly = ConvexPoly2(convexHull);
+	AddVertsForConvex2D(verts, convexPoly, fillColor, isDrawingLine, lineColor, lineThickness);
+}
+
+void AddVertsForConvexLine2D(std::vector<Vertex_PCU>& verts, ConvexPoly2 const& convexPoly, Rgba8 const lineColor, float lineThickness)
+{
+	std::vector<Vec2> convexPositions = convexPoly.GetVertexPositions();
+	for (size_t i = 0; i < convexPositions.size() - 1; ++i)
+	{
+		AddVertsForLineSegment2D(verts, convexPositions[i], convexPositions[i + 1], lineThickness, lineColor,false);
+	}
+	AddVertsForLineSegment2D(verts, convexPositions[convexPositions.size() - 1], convexPositions[0], lineThickness, lineColor, false);
 }
 
 void TransformVertexArray3D(std::vector<Vertex_PCU>& verts, Mat44 const& tranform)

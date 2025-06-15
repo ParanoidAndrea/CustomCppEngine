@@ -32,11 +32,13 @@ Button::Button(AABB2 const& buttonArea, Renderer* render, std::string buttonText
 	m_isShowingBackground = true;
 }
 
-Button::Button(AABB2 const& buttonArea, EventArgs const& args, std::string const& label, std::string const& eventName, std::string const& fontName, Renderer* render, AudioSystem* audioSystem, Texture* buttonTexture)
+Button::Button(AABB2 const& buttonArea, EventArgs const& args, std::string const& label, std::string const& eventName, std::string const& fontName, Renderer* render, AudioSystem* audioSystem, Texture* buttonTexture,  Rgba8 const& buttonTextNormalColor, Rgba8 const& buttonTextHoverColor)
 	:m_eventName(eventName),
 	m_audioSystem(audioSystem),
 	m_args(args),
 	Widget(render)
+	,m_textColor(buttonTextNormalColor)
+	,m_textHoverColor(buttonTextHoverColor)
 {
 	m_backgroundTexture = buttonTexture;
 	m_widgetArea = buttonArea;
@@ -149,7 +151,7 @@ void Button::Update()
 		&& InButtonArea(m_renderer->GetRenderConfig().m_window->GetMouseScreenPos()))
 	{
 		m_buttonColor = m_buttonPressedColor;
-		OnClick();
+		//OnClick();
 	}
 	else if (m_isHover)
 	{
@@ -257,8 +259,23 @@ void Button::OnUnhover()
 	m_isHover = false;
 }
 
+void Button::DisableTextShadow()
+{
+	m_labelText->DisableShadow();
+}
+
+void Button::SetTextAspect(float textAspect)
+{
+	m_labelText->SetTextAspect(textAspect);
+}
+
 void Button::SetTextNormalColorAndHoverColor(Rgba8 const& textNormalColor, Rgba8 const& textHoverColor)
 {
 	m_textColor = textNormalColor;
 	m_textHoverColor = textHoverColor;
+}
+
+void Button::SetArgs(EventArgs const& args)
+{
+	m_args = args;
 }

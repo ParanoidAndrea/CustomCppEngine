@@ -19,7 +19,7 @@ public:
         Rgba8 const& textColor = Rgba8::WHITE,
         bool isEnableShadow = true,
         Rgba8 const& shadowColor = Rgba8(0, 0, 0, 200),
-        Vec2 const& shadowOffset = Vec2(2.5f, 2.5f),
+        Vec2 const& shadowOffset = Vec2(2.f, 1.5f),
         TextBoxMode const& mode = SHRINK_TO_FIT
     );
     Textbox(
@@ -32,7 +32,7 @@ public:
         Rgba8 const& textColor = Rgba8::WHITE,
         bool isEnableShadow = true,
         Rgba8 const& shadowColor = Rgba8(0, 0, 0, 200),
-        Vec2 const& shadowOffset = Vec2(2.5f, 2.5f),
+        Vec2 const& shadowOffset = Vec2(2.f, 1.5f),
         TextBoxMode const& mode = SHRINK_TO_FIT
     );
     virtual void Update() override;
@@ -59,6 +59,11 @@ public:
         m_shadowColor  = shadowColor  ;
         m_shadowOffset = shadowOffset ;
     }
+    void SetTextAspect(float textAspect)
+    {
+        m_fontAspect = textAspect;
+    }
+        
     void DisableShadow()
     {
         m_isEnableShadow = false;

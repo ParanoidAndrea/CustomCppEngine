@@ -16,6 +16,7 @@ struct DebugRenderConfig
 {
 	Renderer* m_renderer = nullptr;
 	std::string m_fontName = "SquirrelFixedFont";
+	float m_fontAspect = 1.f;
 };
 
 //Setup
@@ -45,7 +46,7 @@ void DebugAddWorldBasis(Mat44 const& transform, float duration, DebugRenderMode 
 void DebugAddWorldBillboardText(std::string const& text, Vec3 const& origin, float textHeight, Vec2 const& alignment, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddScreenText(std::string const& text, AABB2 const& textBox, float textHeight, Vec2 const& alignment, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE, DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
 void DebugAddMessage(std::string const& text, float duration, Rgba8 const& startColor = Rgba8::WHITE, Rgba8 const& endColor = Rgba8::WHITE);
-
+void DebugClearScreenText();
 // Console commands
 bool Command_DebugRenderClear(EventArgs& args);
 bool Command_DebugRenderToggle(EventArgs& args);

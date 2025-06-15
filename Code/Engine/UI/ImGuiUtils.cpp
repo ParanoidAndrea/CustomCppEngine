@@ -91,7 +91,7 @@ void ImGuiStartup(Renderer* renderer, HWND windowHandler)
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
-
+	ImGui::LoadIniSettingsFromDisk("imgui.ini");
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(windowHandler);
 	ImGui_ImplDX11_Init(renderer->GetDevice(), renderer->GetDeviceContext());
@@ -125,6 +125,7 @@ void ImGuiEndFrame()
 
 void ImGuiShutdown()
 {
+	ImGui::SaveIniSettingsToDisk("imgui.ini");
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
@@ -278,4 +279,3 @@ void GuiPopup::ShowWindow()
 		ImGui::EndPopup();
 	}
 }
-

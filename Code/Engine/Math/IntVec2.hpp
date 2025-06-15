@@ -14,13 +14,13 @@ public:
 
 	// Accessors
 	float GetLength() const;
+	float GetLengthSquared() const;
 	int GetTaxicabLength() const;
 	float GetOrientationRadians() const;
 	float GetOrientationDegrees() const;
 	IntVec2 const GetRotated90Degrees() const;
 	IntVec2 const GetRotatedMinus90Degrees() const;
 	bool SetFromText(char const* text);
-
 	// Mutators(non-const methods)
 	void Rotate90Degrees();
 	void RotateMinus90Degrees();

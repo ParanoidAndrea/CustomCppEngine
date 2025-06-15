@@ -7,8 +7,10 @@ class Widget
 {
 public:
 	Widget() = default;
+	virtual ~Widget();
+
 	Widget(Renderer* render) :m_renderer(render){}
-	Widget(Renderer* render,AABB2 const& widgetArea, unsigned int widgetID, 
+	Widget(Renderer* render, AABB2 const& widgetArea, unsigned int widgetID, 
 		std::vector<Widget*> children, std::string const& backgroundTextureName = "", bool isNavigableCanvas = false, bool isVisible = true);
     Widget(Renderer* render, AABB2 const& widgetArea, std::string const& backgroundTextureName = "", bool isVisible = true);
 	Widget(Renderer* render, AABB2 const& widgetArea, Vec2 const& widgetRelativePos, Vec2 const& widgetPivot, std::string const& backgroundTextureName = "", bool isVisible = true);
@@ -23,7 +25,8 @@ public:
 	Mat44 const GetWidgetModelMatrix() const;
 	void AddChildren(std::vector<Widget*> children);
 	void AddChild(Widget* child);
-	void ClearChildren() { m_children.clear(); }
+	void ClearChildren();
+	void DeleteChildren();
 	void SetChildWidgetArea(Widget* child);
 	void SetWidgetAreaFromParent(Widget* parent, bool isUsingNormalizedDimension);
 	void SetChildSTransform(Mat44 transformMatrix = Mat44());
@@ -40,27 +43,31 @@ public:
 	void SetVisibility(bool isVisible) { m_isVisible = isVisible; }
 	void SetIsNavigable(bool isNavigable) { m_isNavigable = isNavigable; }
 	void SetIsShowingBackground(bool isShowingBackground) { m_isShowingBackground = isShowingBackground; }
-	void SetBackgroundTexture(Texture* backgroundTexture) { m_backgroundTexture = backgroundTexture; }
+	void SetBackgroundTexture(Texture* backgroundTexture) { m_backgroundTexture = backgroundTexture;}
 public:
 	Mat44 m_transformMatrix;
 	Rgba8 m_renderColor;
 	bool m_isShowingBackground = true;
 	bool m_isNavigableCanvas = false;
+	bool m_isVisible = true;
+	bool m_isCanvasMouseControl = false;
+	bool m_isNavigable = false;
+	bool m_isShowingBorder = false;
+    unsigned int m_widgetID = 0;
+    unsigned int m_selectedWidgetIndex = INVALID_INDEX;
 	Renderer* m_renderer = nullptr;
 	std::vector<Widget*> m_children;
 	std::vector<Widget*> m_navigableChildren;
-	bool m_isVisible = true;
-	unsigned int m_widgetID = 0;
-	unsigned int m_selectedWidgetIndex = INVALID_INDEX;
-	bool m_isNavigable = false;
+
+
 	Texture* m_backgroundTexture = nullptr;
 	AABB2 m_widgetArea;
 	Vec2 m_widgetRelativePos;
 	Vec2 m_widgetPivot;
 	Vec2 m_widgetNormalizedDimension;
-	bool m_isShowingBorder = false;
+
 	Rgba8 m_borderColor = Rgba8::WHITE;
 	Rgba8 m_borderOuterColor = Rgba8::BLACK;
 	Widget* m_parent = nullptr;
-	bool m_isCanvasMouseControl = false;
+
 };

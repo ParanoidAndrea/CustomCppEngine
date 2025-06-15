@@ -2,6 +2,8 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/UI/UISystem.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 Widget::Widget (Renderer* render, AABB2 const& widgetArea, unsigned int widgetID,
 	std::vector<Widget*> children, std::string const& backgroundTextureName, bool isNavigableCanvas, bool isVisible)
 	:m_widgetArea(widgetArea),
@@ -33,6 +35,16 @@ Widget::Widget (Renderer* render, AABB2 const& widgetArea, unsigned int widgetID
     }
 
 }
+
+
+Widget::~Widget()
+{
+    if(g_uiSystem)
+    {
+        DeleteChildren();
+    }
+}
+
 void Widget::AddChildren(std::vector<Widget*> children)
 {
 
@@ -68,6 +80,36 @@ void Widget::AddChild(Widget* child)
             }
         }
         m_children.push_back(child);
+    }
+}
+
+void Widget::ClearChildren()
+{
+//     for (auto child : m_children)
+//     {
+//         delete child;
+//     }
+    m_children.clear();
+}
+
+void Widget::DeleteChildren()
+{
+    std::vector<Widget*> childrenToDelete;
+    childrenToDelete.reserve(m_children.size());
+
+    for (Widget* child : m_children)
+    {
+        if (child && child != reinterpret_cast<Widget*>(0xFFFFFFFFFFFFFFFF))
+        {
+            childrenToDelete.push_back(child);
+        }
+    }
+
+    m_children.clear();
+
+    for (Widget* child : childrenToDelete)
+    {
+        g_uiSystem->DeleteWidget(child);
     }
 }
 
@@ -110,7 +152,10 @@ Widget::Widget(Renderer* render, AABB2 const& widgetArea, Vec2 const& widgetRela
 
 void Widget::Update()
 {
-	
+    if (!m_isVisible)
+    {
+        return;
+    }
 	if (m_isNavigableCanvas)
 	{
         bool isChildHoverByMouse = false;
@@ -210,6 +255,10 @@ void Widget::Render() const
 {
 	if (m_isVisible)
 	{	
+        m_renderer->SetBlendMode(BlendMode::ALPHA);
+        m_renderer->SetDepthMode(DepthMode::ENABLED);
+        m_renderer->SetSamplerMode(SamplerMode::TRILINEAR_WRAP);
+        m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
         if (m_isShowingBorder)
         {
             RenderBorder();
@@ -231,6 +280,8 @@ void Widget::Render() const
 void Widget::RenderBackground() const
 {
     std::vector<Vertex_PCU> verts;
+    //m_renderer->SetBlendMode(BlendMode::OPAQUE);
+    //m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
     AddVertsForAABB2D(verts, m_widgetArea, Rgba8::WHITE, Vec2(), Vec2(1.f, 1.f));
     m_renderer->BindTexture(m_backgroundTexture);
     m_renderer->BindShader(nullptr);
@@ -245,8 +296,6 @@ void Widget::RenderBorder() const
 	std::vector<Vertex_PCU> verts;
 	//Vec2 edgePoints[4];
     m_renderer->SetModelConstants(m_transformMatrix);
-    m_renderer->SetBlendMode(BlendMode::ALPHA);
-    m_renderer->SetDepthMode(DepthMode::ENABLED);
     m_renderer->BindTexture(nullptr);
     Vec2 dimension = m_widgetArea.GetDimensions();
     if (m_borderOuterColor != m_borderColor)

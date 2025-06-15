@@ -15,7 +15,7 @@ Textbox::Textbox(Renderer* render, AABB2 const& textBoxArea, std::string const& 
     ,Widget(render)
 {
     m_widgetArea = textBoxArea;
-    m_renderColor = Rgba8(255, 255, 255, 0);
+    m_renderColor = Rgba8(255, 255, 255, 255);
     m_isShowingBackground = false;
 }
 Textbox::Textbox(Renderer* render, Vec2 const& boxDimension,Vec2 const& relativePos, Vec2 const& pivot, std::string const& label, BitmapFont* bitmapFont, Vec2 const& alignment, float fontSize, float fontAspect, Rgba8 const& textColor, bool isEnableShadow, Rgba8 const& shadowColor, Vec2 const& shadowOffset, TextBoxMode const& mode) :
@@ -35,7 +35,7 @@ Textbox::Textbox(Renderer* render, Vec2 const& boxDimension,Vec2 const& relative
     m_widgetNormalizedDimension = boxDimension;
     m_widgetRelativePos = relativePos;
     m_widgetPivot = pivot;
-    m_renderColor = Rgba8(255, 255, 255, 0);
+    m_renderColor = Rgba8(255, 255, 255, 255);
     m_isShowingBackground = false;
 }
 

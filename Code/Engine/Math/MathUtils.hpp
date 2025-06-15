@@ -11,6 +11,7 @@
 #include "Engine/Math/OBB3.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Plane3.hpp"
+#include "Engine/Math/Convex.hpp"
 constexpr float PI = 3.14159265f;
 struct Vec2;
 struct Vec3;
@@ -85,6 +86,7 @@ bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& orientedBox);
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius);
 bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees, float sectorRadius);
 bool IsPointInsideHexgon2D(Vec2 const& point, Vec2 const& hexgonCenter, float hexgonInradius);
+bool IsPointInsideConvex2D(Vec2 const& point, ConvexHull2 const& convexHull);
 bool IsPointInsideHexgonXY3D(Vec3 const& point, Vec2 const& hexgonCenter, float hexgonInradius);
 bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& box);
@@ -139,3 +141,7 @@ unsigned char DenormalizeByte(float zeroToOne);
 
 float ComputeCubicBezier1D(float A, float B, float C, float D, float t);
 float ComputeQuinticBezier1D(float A, float B, float C, float D, float E, float F, float t);
+
+void GetBoundingDiscFromPoints( Vec2 const& a,  Vec2 const& b, Vec2& center, float& radiusSquared);
+void GetBoundingDiscFromThreePoints( Vec2 const& a, Vec2 const& b, Vec2 const& c, Vec2& center, float& radiusSquared);
+void SmallestEnclosingCircle(std::vector<Vec2>& points, Vec2& center, float& radiusSquared);

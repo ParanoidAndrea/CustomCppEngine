@@ -61,3 +61,4 @@ bool IsGuiWindowFocus();
 void SetGuiWindowFocus(bool isFocus);
 void ToggleGuiWindowFocus();
 void SetToggleWindowKey(char keyCode);
+

@@ -1,5 +1,5 @@
 #include "AABB2.hpp"
-
+#include "Engine/Math/MathUtils.hpp"
 AABB2::AABB2(AABB2 const& copyFrom)
 	: m_mins(copyFrom.m_mins)
 	, m_maxs(copyFrom.m_maxs)
@@ -37,6 +37,13 @@ bool AABB2::IsPointInside(Vec2 const& point) const
 float AABB2::GetHeight() const
 {
 	return m_maxs.y - m_mins.y;
+}
+
+void AABB2::InterpolateFromCenter(Vec2 const& refCenter, float t)
+{
+	Vec2 center = GetCenter();
+	center = Interpolate(center, refCenter, t);
+	SetCenter(center);
 }
 
 Vec2 const AABB2::GetCenter() const
@@ -83,6 +90,19 @@ Vec2 const AABB2::GetUVForPoint(Vec2 const& point) const
 }
 
 
+
+AABB2 const AABB2::GetScaledAABB2(Vec2 const scale) const
+{
+	Vec2 dimension = GetDimensions();
+	dimension = dimension * scale;
+    Vec2 center = GetCenter();
+	AABB2 newBox;
+    newBox.m_maxs.x = center.x + dimension.x / 2.f;
+    newBox.m_mins.x = center.x - dimension.x / 2.f;
+    newBox.m_maxs.y = center.y + dimension.y / 2.f;
+    newBox.m_mins.y = center.y - dimension.y / 2.f;
+	return newBox;
+}
 
 AABB2 const AABB2::GetAABB2ForNormalizePoints(Vec2 const& minsNormalized, Vec2 const& maxsNormalized) const
 {

@@ -20,11 +20,13 @@ public:
 	//Accessors (const methods)
 	bool IsPointInside(Vec2 const& point) const;
 	float GetHeight() const;
+	void InterpolateFromCenter(Vec2 const& refCenter, float t);
 	Vec2 const GetCenter() const;
 	Vec2 const GetDimensions() const;
 	Vec2 const GetNearestPoint(Vec2 const& referencePos) const;
 	Vec2 const GetPointAtUV(Vec2 const& uv) const; //uv=(0,0) is at mins; uv=(1,1) is at maxs;
 	Vec2 const GetUVForPoint(Vec2 const& point) const;//uv=(.5,.5) at center; u or v outside [0,1] extrapolated
+	AABB2 const GetScaledAABB2(Vec2 const scale) const;
 	AABB2 const GetAABB2ForNormalizePoints(Vec2 const& minsNormalized, Vec2 const& maxsNormalized) const;
 	// Mutators (non-const methods)
 	void Translate(Vec2 const& translationToApply);

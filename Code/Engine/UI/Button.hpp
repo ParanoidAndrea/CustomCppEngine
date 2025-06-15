@@ -15,7 +15,7 @@ public:
 	Button(AABB2 const& buttonArea,Renderer* render = nullptr, std::string buttonTextureName="", Rgba8 buttonColor = Rgba8::WHITE, std::string label = "", std::string eventName = "", std::string fontName = "SquirrelFixedFont",AudioSystem* audioSystem = nullptr, Rgba8 hoverColor = Rgba8(255,255,255,125),Rgba8 pressedColor = Rgba8::GREY);
     Button(Vec2 const& buttonDimension, Vec2 const& widgetRelativePos,Vec2 const& widgetPivot, Renderer* render = nullptr, std::string buttonTextureName = "", Rgba8 buttonColor = Rgba8::WHITE, std::string label = "", std::string eventName = "", std::string fontName = "SquirrelFixedFont", AudioSystem* audioSystem = nullptr, Rgba8 hoverColor = Rgba8(255, 255, 255, 125), Rgba8 pressedColor = Rgba8::GREY);
 	Button(Vec2 const& buttonDimension, Vec2 const& widgetRelativePos,Vec2 const& widgetPivot, Textbox* testBox, Renderer* render = nullptr, std::string buttonTextureName = "", Rgba8 buttonColor = Rgba8::WHITE, std::string eventName = "", AudioSystem* audioSystem = nullptr, Rgba8 hoverColor = Rgba8(255, 255, 255, 125), Rgba8 pressedColor = Rgba8::GREY);
-	Button(AABB2 const& buttonArea,  EventArgs const& args, std::string const& label = "", std::string const& eventName = "", std::string const& fontName = "ClassicComic", Renderer* render = nullptr, AudioSystem* audioSystem = nullptr, Texture* buttonTexture = nullptr);
+	Button(AABB2 const& buttonArea,  EventArgs const& args, std::string const& label = "", std::string const& eventName = "", std::string const& fontName = "ClassicComic", Renderer* render = nullptr, AudioSystem* audioSystem = nullptr, Texture* buttonTexture = nullptr, Rgba8 const& buttonTextNormalColor = Rgba8::WHITE, Rgba8 const& buttonTextHoverColor = Rgba8::WHITE );
 	virtual void Update() override;
 	virtual void Render() const override;
 	void Reset();
@@ -23,11 +23,17 @@ public:
 	virtual void OnClick() override;
 	virtual void OnHover() override;
 	virtual void OnUnhover() override;
+	void DisableTextShadow();
+	void SetTextAspect(float textAspect);
 	void SetTextNormalColorAndHoverColor(Rgba8 const& textNormalColor,Rgba8 const& textHoverColor);
+    template<typename T>
+    void SetValue(std::string const& keyName, T const& value);
+	void SetArgs(EventArgs const& args);
 public:
 	std::string m_eventName = "";
 	bool m_isHiddenBorderOnHover = true;
 	//unsigned int m_navigateIndex = 0xffffffff;
+
 private:
 	EventArgs m_args;
 	Rgba8 m_buttondDefaultColor = Rgba8::WHITE;
@@ -43,3 +49,9 @@ private:
 	bool m_isHover = false;
 	Textbox* m_labelText = nullptr;
 };
+
+template<typename T>
+void Button::SetValue(std::string const& keyName, T const& value)
+{
+	m_args.SetValue(keyName, value);
+}

@@ -5,7 +5,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include <unordered_map>
-
+#include "Game/EngineBuildPreferences.hpp"
 struct VertexIndex 
 {
 	int m_posIndex = -1;  // Vertex Position index
@@ -140,9 +140,11 @@ bool ObjLoader::Load(std::string const& fileName, std::vector<Vertex_PCUTBN>& ou
 		}
 
 	}
+
+#if !defined ENGINE_DISABLE_OBJ_DEBUGTIME
 	auto loadEndTime = std::chrono::high_resolution_clock::now();
 	auto loadTime = std::chrono::duration_cast<std::chrono::microseconds>(loadEndTime - loadStartTime).count();
-
+#endif
 	outVertexes.reserve(triangles.size() * 3);
 	outIndexes.reserve(triangles.size() * 3);
 
@@ -283,9 +285,11 @@ bool ObjLoader::Load(std::string const& fileName, std::vector<Vertex_PCUTBN>& ou
 
 	TransformVertexArray3D(outVertexes, transform);
 
-	auto createCPUMeshEndTime = std::chrono::high_resolution_clock::now();
-	auto createCPUMeshTime = std::chrono::duration_cast<std::chrono::microseconds>(createCPUMeshEndTime - loadEndTime).count();
-	
+
+
+#if !defined ENGINE_DISABLE_OBJ_DEBUGTIME
+    auto createCPUMeshEndTime = std::chrono::high_resolution_clock::now();
+    auto createCPUMeshTime = std::chrono::duration_cast<std::chrono::microseconds>(createCPUMeshEndTime - loadEndTime).count();
 	PrintTextToDebug(Stringf("---------------------------------------------------------------------------------\n"));
 	PrintTextToDebug(Stringf("Loaded .obj file %s\n", fileName.c_str()));
 	PrintTextToDebug(Stringf("\t\t\t\t\t\t "));
@@ -299,7 +303,7 @@ bool ObjLoader::Load(std::string const& fileName, std::vector<Vertex_PCUTBN>& ou
 	PrintTextToDebug(Stringf("triangles: %d  ", (int)triangles.size()));
 	PrintTextToDebug(Stringf("time:%.8fs\n", (double)loadTime / 1000000.0));
 	PrintTextToDebug(Stringf("Created CPU Mesh         time: %.8fs\n", (double)createCPUMeshTime / 1000000.0));
-
+#endif
 	return true;
 }
 

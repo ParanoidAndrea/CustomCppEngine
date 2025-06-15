@@ -3,7 +3,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "ThirdParty/ImGui/imgui.h"
 #include "ThirdParty/ImGui/imgui_impl_win32.h"
-
+#pragma  warning(disable : 26819)
 Window* Window::s_theWindow = nullptr;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -64,7 +64,9 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 			unsigned char keyCode = KEYCODE_LEFT_MOUSE;
 			if (input)
 			{
-				input->HandleKeyPressed(keyCode);
+                EventArgs args;
+                args.SetValue("KeyCode", Stringf("%d", keyCode));
+                FireEvent("KeyPressed", args);
 				return 0;
 			}
 		}
@@ -73,8 +75,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 			unsigned char keyCode = KEYCODE_LEFT_MOUSE;
 			if (input)
 			{
-				input->HandleKeyReleased(keyCode);
-				return 0;
+                EventArgs args;
+                args.SetValue("KeyCode", Stringf("%d", keyCode));
+                FireEvent("KeyReleased", args);
+                return 0;
 			}
 		}
 		case WM_RBUTTONDOWN:
@@ -83,8 +87,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 
 			if (input)
 			{
-				input->HandleKeyPressed(keyCode);
-				return 0;
+                EventArgs args;
+                args.SetValue("KeyCode", Stringf("%d", keyCode));
+                FireEvent("KeyPressed", args);
+                return 0;
 			}
 		}
 		case WM_RBUTTONUP:
@@ -93,9 +99,20 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 
 			if (input)
 			{
-				input->HandleKeyReleased(keyCode);
-				return 0;
+                EventArgs args;
+                args.SetValue("KeyCode", Stringf("%d", keyCode));
+                FireEvent("KeyReleased", args);
+                return 0;
 			}
+		}
+		case WM_MOUSEWHEEL:
+		{
+			int wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+			int scrollDirection = (wheelDelta > 0) ? 1 : -1;
+			EventArgs args;
+			args.SetValue("ScrollDirection", Stringf("%d", scrollDirection));
+			FireEvent("MouseScroll", args);
+			return 0;
 		}
 	}
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
@@ -221,7 +238,7 @@ void Window::CreateOSWindow()
 		clientRect.bottom  = (int)clientHeight + clientRect.top;
 	}
 
-	const DWORD windowStyleFlags   = m_config.m_isFullscreen? WS_POPUP : WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
+	const DWORD windowStyleFlags   = m_config.m_isFullscreen? WS_POPUP : WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_OVERLAPPED;
 	const DWORD windowStyleExFlags = m_config.m_isFullscreen? WS_EX_TOPMOST : WS_EX_APPWINDOW;
 	RECT windowRect = clientRect;
 	AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);

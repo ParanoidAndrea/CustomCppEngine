@@ -865,6 +865,12 @@ inline std::filesystem::path ImGui::FileBrowser::GetSelected() const
     {
         return currentDirectory_;
     }
+    std::filesystem::path projectRoot_ = std::filesystem::current_path();
+    if (currentDirectory_.string()._Starts_with(projectRoot_.string()))
+    {
+        auto relative_path = currentDirectory_.lexically_relative(projectRoot_);
+        return relative_path / *selectedFilenames_.begin();
+    }
     return currentDirectory_ / *selectedFilenames_.begin();
 }
 

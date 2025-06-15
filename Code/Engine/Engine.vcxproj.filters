@@ -20,9 +20,6 @@
     <Filter Include="Window">
       <UniqueIdentifier>{4439988e-cf8e-4cc5-aa9a-d00c0328f150}</UniqueIdentifier>
     </Filter>
-    <Filter Include="TinyXML2">
-      <UniqueIdentifier>{8397dee3-9b5a-4142-a33a-58bc29248b94}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI">
       <UniqueIdentifier>{68599571-694a-44df-b59c-347210c13ef0}</UniqueIdentifier>
     </Filter>
@@ -31,6 +28,9 @@
     </Filter>
     <Filter Include="ImGui">
       <UniqueIdentifier>{ba862608-dcdd-446d-92d2-863d8022d920}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Squirrel\TinyXML2">
+      <UniqueIdentifier>{8397dee3-9b5a-4142-a33a-58bc29248b94}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -116,7 +116,7 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="..\ThirdParty\TinyXML2\tinyxml2.cpp">
-      <Filter>TinyXML2</Filter>
+      <Filter>Squirrel\TinyXML2</Filter>
     </ClCompile>
     <ClCompile Include="Math\RaycastUtils.cpp">
       <Filter>Math</Filter>
@@ -256,6 +256,36 @@
     <ClCompile Include="Render\TextureArray.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Convex.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Plane2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BufferParser.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\NamedProperties.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ScrollBox.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\HashedCaseInsensitiveString.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\NoiseUtils.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\UISystem.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BufferWriter.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BufferUtils.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -370,7 +400,7 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\ThirdParty\TinyXML2\tinyxml2.h">
-      <Filter>TinyXML2</Filter>
+      <Filter>Squirrel\TinyXML2</Filter>
     </ClInclude>
     <ClInclude Include="Math\RaycastUtils.hpp">
       <Filter>Math</Filter>
@@ -515,6 +545,39 @@
     </ClInclude>
     <ClInclude Include="Render\TextureArray.hpp">
       <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Convex.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Plane2.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BufferParser.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\HashedCaseInsensitiveString.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\NamedProperties.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ScrollBox.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\NoiseUtils.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\ImGui\imgui_curve.hpp">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UISystem.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BufferWriter.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BufferUtils.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

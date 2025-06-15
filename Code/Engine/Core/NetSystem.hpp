@@ -3,6 +3,7 @@
 #include <queue>
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 struct NetSystemConfig
 {
 	std::string m_modeString;
@@ -29,6 +30,8 @@ enum class ServerState
 	LISTENING,
 	CLIENT_CONNECTED
 };
+
+
 class NetSystem
 {
 public:
@@ -42,6 +45,7 @@ public:
 	bool IsClient() const;
 	bool IsConnected() const;
 	void Send(std::string const& data);
+	void Send(std::string const& data, EventArgs& args);
 	void Disconnected();
 	NetSystemConfig GetNetSystemConfig() const;
 private:

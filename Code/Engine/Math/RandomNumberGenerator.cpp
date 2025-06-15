@@ -25,7 +25,7 @@ float RandomNumberGenerator::RollRandomFloatZeroToOne()
 // rand() from 0 to 32767 / RAND_MAX
 float RandomNumberGenerator::RollRandomFloatInRange(float minInclusive, float maxInclusive)
 {
-	float range = 1.f + maxInclusive - minInclusive;
+	float range = maxInclusive - minInclusive;
 	return minInclusive + (range * RollRandomFloatZeroToOne());
 }
 

@@ -3,6 +3,7 @@
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include <algorithm>
 RaycastResult2D RaycastVsDisc2D(Vec2 startPos, Vec2 ifwdNormal, float maxDist, Vec2 discCenter, float discRadius)
 {
 
@@ -165,6 +166,120 @@ RaycastResult2D RaycastVsAABBs2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, A
 		result.m_impactDist = (result.m_impactPos-startPos).GetLength(); // Using tOverlap.min as a factor
 	}
 
+	return result;
+}
+
+RaycastResult2D RaycastVsPlane2D(Vec2 rayStart, Vec2 rayForwardNormal, float rayLength, Plane2 const& plane)
+{
+    RaycastResult2D result;
+    Vec2 rayEnd = rayStart + rayForwardNormal * rayLength;
+    result.m_rayFwdNormal = rayForwardNormal;
+    if (plane.IsPointInTheFrontSide(rayStart) == plane.IsPointInTheFrontSide(rayEnd))
+    {
+        return result;
+    }
+    float localStartAltitude = fabsf(plane.GetAltitudeOfPoint(rayStart));
+    float localEndAltitude = fabsf(plane.GetAltitudeOfPoint(rayEnd));
+    result.m_didImpact = true;
+    result.m_impactPos = rayStart + rayForwardNormal * rayLength * (localStartAltitude / (localEndAltitude + localStartAltitude));
+    result.m_impactDist = (result.m_impactPos - rayStart).GetLength();
+    if (plane.IsPointInTheFrontSide(rayStart))
+    {
+        result.m_impactNormal = plane.m_normal;
+    }
+    else
+    {
+        result.m_impactNormal = plane.m_normal * -1.f;
+    }
+    return result;
+}
+
+RaycastResult2D RaycastVsConvexHull2D(Vec2 rayStart, Vec2 rayForwardNormal, float rayLength, ConvexHull2 const& convex)
+{
+	RaycastResult2D result;
+	result.m_rayFwdNormal = rayForwardNormal;
+	Vec2 rayEnd = rayStart + rayForwardNormal * rayLength;
+	std::vector<Plane2> const& planes = convex.m_boundingPlanes;
+    std::vector<RaycastResult2D> entryPoints;
+    std::vector<RaycastResult2D> exitPoints;
+	for (size_t i = 0; i < planes.size(); ++i)
+	{
+		RaycastResult2D planeResult = RaycastVsPlane2D(rayStart,rayForwardNormal, rayLength,planes[i]);
+		if (planeResult.m_didImpact)
+		{
+			if (planes[i].IsPointInTheFrontSide(rayStart))
+			{
+				entryPoints.push_back(planeResult);
+			}
+			else
+			{
+				exitPoints.push_back(planeResult);
+			}
+		}
+	}
+
+    if (entryPoints.size() == 0)
+    {
+        if (IsPointInsideConvex2D(rayStart, convex))
+        {
+            result.m_impactPos = rayStart;
+            result.m_impactDist = 0.f;
+            result.m_impactNormal = rayForwardNormal;
+            result.m_didImpact = true;
+            return result;
+        }
+        return result;
+    }
+
+	if (exitPoints.size() == 0)
+	{
+		if (IsPointInsideConvex2D(rayStart, convex))
+		{
+			result.m_impactPos = rayStart;
+			result.m_impactDist = 0.f;
+			result.m_impactNormal = rayForwardNormal;
+			result.m_didImpact = true;
+			return result;
+		}
+		else
+		{
+            if (IsPointInsideConvex2D(rayEnd, convex))
+            {
+                std::sort(entryPoints.begin(), entryPoints.end(), [](RaycastResult2D const& a, RaycastResult2D const& b)
+                    {
+                        return a.m_impactDist < b.m_impactDist;
+                    });
+                result = entryPoints.back();
+                return result;
+            }
+            else
+            {
+                return result;
+            }
+			
+		}
+	}
+    std::sort(entryPoints.begin(), entryPoints.end(), [](RaycastResult2D const& a, RaycastResult2D const& b)
+        {
+            return a.m_impactDist < b.m_impactDist;
+        });
+    std::sort(exitPoints.begin(), exitPoints.end(), [](RaycastResult2D const& a, RaycastResult2D const& b)
+        {
+            return a.m_impactDist < b.m_impactDist;
+        });
+	
+	if (entryPoints.back().m_impactDist < exitPoints.front().m_impactDist)
+	{
+		Vec2 midpoint = (entryPoints.back().m_impactPos + exitPoints.front().m_impactPos) / 2.f;
+		if (IsPointInsideConvex2D(midpoint,convex))
+		{
+			return entryPoints.back();
+		}
+		else
+		{
+			return result;
+		}
+	}
 	return result;
 }
 

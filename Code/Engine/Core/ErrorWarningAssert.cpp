@@ -14,7 +14,7 @@
 #include "Engine/Core/StringUtils.hpp"
 #include <stdarg.h>
 #include <iostream>
-
+#include "Engine/Core/EventSystem.hpp"
 
 //-----------------------------------------------------------------------------------------------
 bool IsDebuggerAvailable()
@@ -235,7 +235,7 @@ __declspec( noreturn ) void FatalError( char const* filePath, char const* functi
 		SystemDialogue_Okay( fullMessageTitle, fullMessageText, MsgSeverityLevel::FATAL );
 		ShowCursor( TRUE );
 	}
-
+	FireEvent("Quit");
 	exit( 0 );
 }
 
@@ -290,6 +290,7 @@ void RecoverableWarning( char const* filePath, char const* functionName, int lin
 		ShowCursor( TRUE );
 		if( answerCode == 0 ) // "NO"
 		{
+			FireEvent("Quit");
 			exit( 0 );
 		}
 		else if( answerCode == -1 ) // "CANCEL"
@@ -303,6 +304,7 @@ void RecoverableWarning( char const* filePath, char const* functionName, int lin
 		ShowCursor( TRUE );
 		if( !isAnswerYes )
 		{
+			FireEvent("Quit");
 			exit( 0 );
 		}
 	}

@@ -29,10 +29,10 @@ struct ID3D11SamplerState;
 struct ID3D11DepthStencilView;
 struct ID3D11Texture2D;
 struct ID3D11DepthStencilState;
-
+struct ID3DUserDefinedAnnotation;
 struct RenderConfig
 {
-	Window* m_window;
+	Window* m_window = nullptr;
 };
 struct LightingDebug
 {
@@ -111,8 +111,9 @@ enum class SamplerMode
 	POINT_CLAMP,
 	BILINEAR_WRAP,
 	BILINEAR_CLAMP,
-	MIP_MAPPING,
-	MIP_MAPPING_POINT,
+	MIP_MAPPING_POINT_WRAP,
+	TRILINEAR_WRAP,
+	ANISOTROPIC,
 	COUNT
 };
 
@@ -161,6 +162,7 @@ public:
 	void DrawVertexBuffer(VertexBuffer* vbo, int vertexCount, VertexType type = VertexType::Vertex_PCU, int vertexOffset = 0);
 
 	void BindTexture(Texture const* texture, unsigned int slot = 0);
+	void BindTextureToVS(Texture const* texture, unsigned int slot = 0);
 	void BindTextureArray(TextureArray const* textureArray, unsigned int slot = 0);
 	void CreateBloomShaders(char const* blurDownFilename, char const* blurUpFilename, char const* compositeFilename);
 	void SetBlendMode(BlendMode blendMode);
@@ -185,6 +187,8 @@ public:
 	ConstantBuffer* CreateConstantBuffer(const size_t size);
 	void BindConstantBuffer(int slot, ConstantBuffer* cbo);
 	void RenderEmissive();
+	void BeginRenderEvent(char const* eventName);
+	void EndRenderEvent();
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
 private:
@@ -248,7 +252,7 @@ protected:
 	ID3D11RasterizerState* m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
 	ID3D11DepthStencilState* m_depthStencilStates[(int)(DepthMode::COUNT)] = {};
 	ID3D11DepthStencilState* m_depthStencilState = nullptr;
-
+	ID3DUserDefinedAnnotation* m_userDefinedAnnotations = nullptr;
 	BlendMode m_desiredBlendMode = BlendMode::ALPHA;
 	SamplerMode m_desiredSamplerMode1 = SamplerMode::POINT_CLAMP;
 	SamplerMode m_desiredSamplerMode2 = SamplerMode::COUNT;

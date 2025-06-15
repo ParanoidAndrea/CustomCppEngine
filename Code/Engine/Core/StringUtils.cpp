@@ -3,9 +3,133 @@
 #include <algorithm>
 #include <windows.h>
 #include "Engine/Core/Timer.hpp"
-#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
+#include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/EulerAngles.hpp"
 //-----------------------------------------------------------------------------------------------
 constexpr int STRINGF_STACK_LOCAL_TEMP_LENGTH = 2048;
+
+int StringToValue(std::string const& str, int defailtValue)
+{
+	char* endptr;
+	long num = strtol(str.c_str(), &endptr, 10);
+	if (*endptr != '\0') //Invalid input: The string contains non-numeric characters
+	{
+		return defailtValue;
+	}
+	return num;
+}
+
+float StringToValue(std::string const& str, float defailtValue)
+{
+	char* endptr;
+	float num = strtof(str.c_str(), &endptr);
+	if (*endptr != '\0')
+	{
+		return defailtValue;
+	}
+	return num;
+}
+
+bool StringToValue(std::string const& str, bool defailtValue)
+{
+	if (_stricmp("true", str.c_str()) == 0)
+	{
+		return true;
+	}
+	else if (_stricmp("false", str.c_str()) == 0)
+	{
+		return false;
+	}
+	return defailtValue;
+}
+
+Vec2 StringToValue(std::string const& str, Vec2 defailtValue)
+{
+	Vec2 value;
+    Strings resultStrings = SplitStringOnDelimiter(str, ',');
+    int numStrings = (int)resultStrings.size();
+    if (numStrings != 2)
+    {
+        return defailtValue;
+    }
+    value.x = static_cast<float>(atoi(resultStrings[0].c_str()));
+    value.y = static_cast<float>(atoi(resultStrings[1].c_str()));
+	return value;
+}
+
+Vec3 StringToValue(std::string const& str, Vec3 defailtValue)
+{
+	Vec3 value;
+    Strings resultStrings = SplitStringOnDelimiter(str, ',');
+    int numStrings = (int)resultStrings.size();
+    if (numStrings != 3)
+    {
+        return defailtValue;
+    }
+    value.x = static_cast<float>(atof(resultStrings[0].c_str()));
+    value.y = static_cast<float>(atof(resultStrings[1].c_str()));
+    value.z = static_cast<float>(atof(resultStrings[2].c_str()));
+	return value;
+}
+
+Rgba8 StringToValue(std::string const& str, Rgba8 defailtValue)
+{
+	Rgba8 value;
+    Strings resultStrings = SplitStringOnDelimiter(str, ',');
+
+    if (resultStrings.size() == 3 || resultStrings.size() == 4)
+    {
+        value.r = static_cast<unsigned char>(atoi(resultStrings[0].c_str()));
+        value.g = static_cast<unsigned char>(atoi(resultStrings[1].c_str()));
+        value.b = static_cast<unsigned char>(atoi(resultStrings[2].c_str()));
+
+        if (resultStrings.size() == 4)
+        {
+            value.a = static_cast<unsigned char>(atoi(resultStrings[3].c_str()));
+        }
+        else
+        {
+            value.a = 255;
+        }
+        return value;
+    }
+    else
+    {
+        return defailtValue;
+    }
+}
+
+IntVec2 StringToValue(std::string const& str, IntVec2 defailtValue)
+{
+    IntVec2 value;
+    Strings resultStrings = SplitStringOnDelimiter(str, ',');
+    int numStrings = (int)resultStrings.size();
+    if (numStrings != 2)
+    {
+        return defailtValue;
+    }
+    value.x = static_cast<int>(atoi(resultStrings[0].c_str()));
+    value.y = static_cast<int>(atoi(resultStrings[1].c_str()));
+    return value;
+}
+
+EulerAngles StringToValue(std::string const& str, EulerAngles defailtValue)
+{
+	EulerAngles value;
+    Strings resultStrings = SplitStringOnDelimiter(str, ',');
+    int numStrings = (int)resultStrings.size();
+    if (numStrings != 3)
+    {
+        return defailtValue;
+    }
+    value.m_yawDegrees = static_cast<float>(atof(resultStrings[0].c_str()));
+    value.m_pitchDegrees = static_cast<float>(atof(resultStrings[1].c_str()));
+    value.m_rollDegrees = static_cast<float>(atof(resultStrings[2].c_str()));
+    return value;
+}
 
 const std::string Stringf(char const* format, ...)
 {
@@ -138,6 +262,58 @@ Strings SplitStringOnDelimiter(std::string const& originalString, std::string co
 }
 
 
+
+std::string const ToString(int interger)
+{
+	return Stringf("%d", interger);
+}
+
+std::string const ToString(float value)
+{
+	return Stringf("%f", value);
+}
+
+std::string const ToString(bool value)
+{
+	if (value)
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
+std::string const ToString(Vec2 value)
+{
+	return Stringf("%f,%f", value.x, value.y);
+}
+
+std::string const ToString(Vec3 value)
+{
+	return Stringf("%f,%f,%f", value.x, value.y, value.z);
+}
+
+std::string const ToString(Rgba8 value)
+{
+	return Stringf("%c,%c,%c,%c", value.r, value.g, value.b, value.a);
+}
+
+std::string const ToString(IntVec2 value)
+{
+	return Stringf("%d,%d", value.x, value.y);
+}
+
+std::string const ToString(EulerAngles value)
+{
+	return Stringf("%f,%f,%f", value.m_yawDegrees, value.m_pitchDegrees, value.m_rollDegrees);
+}
+
+std::string	const ToString(std::string value)
+{
+	return value;
+}
 
 Strings SplitStringWithQuotes(std::string const& originalString, char delimiterToSplitOn, bool IsKeepQuote)
 {

@@ -11,6 +11,7 @@ public:
 	virtual ~CPUMesh();
 
 	void Load(std::string const& objFilename, Mat44 const& transform);
+	void Duplicate(Mat44 const& transform);
 
 	std::vector<unsigned int> m_indexes;
 	std::vector<Vertex_PCUTBN> m_vertexes;

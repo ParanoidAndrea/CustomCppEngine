@@ -32,6 +32,8 @@ extern unsigned char const KEYCODE_END;
 extern unsigned char const KEYCODE_SHIFT;
 extern unsigned char const KEYCODE_COMMA;
 extern unsigned char const KEYCODE_PERIOD;
+extern unsigned char const KEYCODE_PAGEUP;
+extern unsigned char const KEYCODE_PAGEDOWN;
 constexpr int NUM_KEYCODES = 256;
 constexpr int NUM_XBOX_CONTROLLERS = 4;
 struct InputConfig

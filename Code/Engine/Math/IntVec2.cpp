@@ -22,6 +22,12 @@ float IntVec2::GetLength() const
 {
 	return sqrtf((float)(x*x)+(float)(y*y));
 }
+
+float IntVec2::GetLengthSquared() const
+{
+	return (float)(x*x)+(float)(y*y);
+}
+
 int IntVec2::GetTaxicabLength() const
 {
 	if (x >= 0 && y >= 0)

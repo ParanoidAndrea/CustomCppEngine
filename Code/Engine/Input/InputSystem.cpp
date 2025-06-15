@@ -35,6 +35,8 @@ unsigned char const KEYCODE_END			 = VK_END;
 unsigned char const KEYCODE_SHIFT        = VK_SHIFT;
 unsigned char const KEYCODE_COMMA        = 0xBC;
 unsigned char const KEYCODE_PERIOD		 = 0xBE;
+unsigned char const KEYCODE_PAGEUP		 = VK_PRIOR;
+unsigned char const KEYCODE_PAGEDOWN     = VK_NEXT;
 InputSystem::InputSystem(InputConfig const& inputConfig)
 	:m_inputConfig(inputConfig)
 {
